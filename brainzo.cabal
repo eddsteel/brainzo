@@ -5,9 +5,9 @@ description:         Please see README.md
 homepage:            http://github.com/githubuser/brainzo#readme
 license:             BSD3
 license-file:        LICENSE
-author:              Example Author Name
-maintainer:          example@example.com
-copyright:           2010 Author Here
+author:              Edward Steel
+maintainer:          edd@eddsteel.com
+copyright:           2015 Edward Steel
 category:            Web
 build-type:          Simple
 -- extra-source-files:
@@ -15,7 +15,7 @@ cabal-version:       >=1.10
 
 library
   hs-source-dirs:      src
-  exposed-modules:     Lib
+  exposed-modules:     Brainzo
   build-depends:       base >= 4.7 && < 5
   default-language:    Haskell2010
 
@@ -38,4 +38,4 @@ test-suite brainzo-test
 
 source-repository head
   type:     git
-  location: https://github.com/githubuser/brainzo
+  location: https://github.com/eddsteel/brainzo

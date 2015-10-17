@@ -1,6 +1,6 @@
 module Main where
 
-import Lib
+import Brainzo(dispatch)
 
 main :: IO ()
-main = someFunc
+main = dispatch
