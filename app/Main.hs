@@ -1,6 +1,9 @@
 module Main where
 
-import Brainzo(dispatch)
+import qualified Brainzo
+import System.Environment
 
 main :: IO ()
-main = dispatch
+main = do
+  e <- Brainzo.loadEnv
+  getArgs >>= Brainzo.dispatch e
