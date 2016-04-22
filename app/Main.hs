@@ -5,5 +5,6 @@ import Turtle (sh, arguments)
 
 main :: IO ()
 main = sh $ do
+  a <- arguments
   e <- Brainzo.loadEnv
-  arguments >>= Brainzo.dispatch e
+  Brainzo.dispatch e a

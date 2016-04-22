@@ -1,0 +1,22 @@
+* General
+** Create a place for state
+** Create a function to stringify current state for status bar.
+
+
+* Google Music
+** Search (all remaining terms)
+
+* Sound control
+** Move the xmonad stuff to brainzo?
+
+* System stuff
+** Sleep
+** lock screen
+** inhibit blanking
+
+* bt
+** add (add magnet link over remote and set ratio to 3
+** list (list)
+
+* More?
+** What should I cook (given ingredients)
