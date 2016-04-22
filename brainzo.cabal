@@ -19,6 +19,7 @@ library
                      , Brainzo.Radio
                      , Brainzo.GoogleMaps
                      , Brainzo.Data
+                     , Brainzo.Transmission
   build-depends:       base >= 4.7 && < 5
                      , process
                      , MissingH
@@ -26,8 +27,11 @@ library
                      , directory
                      , strict
                      , turtle
-                     , text
+                     , text == 1.2.2.1
                      , system-filepath
+                     , ConfigFile
+                     , mtl
+                     , fraction
   default-language:    Haskell2010
 
 executable b

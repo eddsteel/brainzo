@@ -16,15 +16,6 @@ type Config    = Text
 type Stations  = Map Text Text
 data Direction = Bwd | Fwd
 
-npfile         :: FilePath
-npfile          = fromText "~/.radio-np"
-
-logfile        :: FilePath
-logfile         = fromText "~/.radio-log"
-
-orNoop         :: Maybe (Shell a) -> Shell a
-orNoop          = fromMaybe empty
-
 radio                               :: Maybe Config -> [Text] -> (Shell (), [Text])
 radio (Just c) ("list":rest)         = (list c, rest)
 radio (Just c) ("play":station:rest) = (playByKey c station, rest)
@@ -36,24 +27,44 @@ radio Nothing  all                   = (err "radio needs some stations.", all)
 radio _        (op:rest)             = (err (T.append (T.append "radio doesn't understand " op) "."), rest)
 
 
+npfile         :: FilePath
+npfile          = fromText "~/.radio-np"
+
+logfile        :: FilePath
+logfile         = fromText "~/.radio-log"
+
+orNoop         :: Maybe (Shell a) -> Shell a
+orNoop          = fromMaybe empty
+
+
 -- run mplayer, piping to logfile
 mplayer        :: Text -> Shell ()
 mplayer url     = let
-                    out = inproc "mplayer" ["-really-quiet", url] empty
+                    out = inproc "mplayer" ["-ao", "pcm:file=/dev/null", url] empty
+                    filtered = grep "ICY" out
                   in
                     output logfile out
 
 off            :: Shell ()
 off             = do
-                    inproc "killall" ["mplayer"] empty
-                    rm npfile
+                    echo "1"
+                    (proc "killall" ["-q", "mplayer"] empty) .||. empty
+                    echo "2"
+                    b <- testfile npfile
+                    echo "3"
+                    if b then rm npfile else empty
 
 play           :: Text -> Text -> Shell ()
-play key url    = cat
-                    [ off
-                    , output npfile (return key)
-                    , mplayer url
-                    , np]
+play key url    = do
+                    echo (T.concat ["playing ", key, "(", url, ")"])
+                    off
+                    echo "hi"
+                    touch npfile
+                    echo "huh"
+                    output npfile (return key)
+                    echo "yo"
+                    mplayer url
+                    np
 
 playByKey      :: Config -> Text -> Shell ()
 playByKey c s   = orNoop (play s <$> specified c)
