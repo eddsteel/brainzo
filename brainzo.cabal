@@ -28,6 +28,7 @@ library
                      , Brainzo.DB.RadioDB
                      , Brainzo.File
                      , Brainzo.Notify
+                     , Brainzo.Transmission
                      , Brainzo.Util
   build-depends:       base
                      , MissingH
@@ -43,7 +44,9 @@ library
                      , system-filepath
                      , text
                      , time
-                     , turtle
+                     , ConfigFile
+                     , mtl
+                     , fraction
   default-language:    Haskell2010
 
 executable b
