@@ -3,16 +3,24 @@ module Brainzo.Transmission(transmission) where
 
 import Control.Applicative
 import Control.Monad.Except
-import Data.Char(isSpace)
+import Data.Char(isSpace,isDigit)
 import Data.ConfigFile(ConfigParser, get, CPError, readstring, emptyCP)
 import Data.Text(Text)
-import Data.Fraction
 import qualified Data.Text as T
-import Turtle
+import Data.Fraction(Fraction)
+import qualified Data.Fraction as F
+import Text.Regex.Applicative.Text
+import Turtle hiding (spaces, chars, match) -- TODO replace regex parsing with Turtle's built in stuff
 
-data TransmissionConfig = TC { host :: Text, seedRatio :: Double }
--- TODO would like progress to be Fraction. Is that a bad idea?
-data TransmissionStatus = TS { id :: Int, progress :: Double, name :: Text }
+data TransmissionConfig = TC { host :: Text, seedRatio :: Double } deriving (Show, Eq)
+data TransmissionStatus = TS { idNum :: Int, progress :: Fraction, name :: Text } deriving (Show,Eq)
+
+instance Show Fraction where
+  show = show . F.toPercentage
+
+instance Eq Fraction where
+  f == g = (F.toFactor f) == (F.toFactor g)
+
 type MagnetURI = Text
 type Config = Text
 
@@ -40,7 +48,6 @@ withConfig     :: Config -> (TransmissionConfig -> Shell ())  -> Shell ()
 withConfig cp f = (either bail f) (useConfig cp)
   where bail = err . T.pack . show
 
-
 readtext     :: MonadError CPError m => ConfigParser -> Text -> m ConfigParser
 readtext cp t = readstring cp (T.unpack t)
 
@@ -55,31 +62,37 @@ useConfig c =
 
 -- | Parse some text into a transmission status
 --
--- >>>  parseStatus "   6   100%    1.36 GB  Done         0.0     0.0    3.0  Finished     LinuxDistribution.iso"
--- TS {id=6,progress=1.0,name=LinuxDistribution.iso}
---
--- TODO real parsers would be less shit
+-- >>>  parseStatus (T.pack "   6   100%    1.36 GB  Done         0.0     0.0    3.0  Finished     Linux Distribution.iso")
+-- Just (TS {idNum = 6, progress = 100.0, name = "Linux Distribution.iso"})`
 --
 parseStatus :: Text -> Maybe TransmissionStatus
-parseStatus t = let
-  s1 = T.stripStart t
-  (i, s2) = T.breakOn " " s1
-  s3 = T.stripStart s2
-  (p, s4) = T.breakOn " " s3
-  n = T.takeWhileEnd (not . isSpace) s4
-  in do
-    id <- (read . T.unpack) i
-    prog <- parseProgress p
-    return (TS id prog n)
+parseStatus  = match reStatus
 
+reStatus :: RE' TransmissionStatus
+reStatus = TS <$> int <*>
+                  reProgress <*>
+                  (chars <* chars <* chars <* doubS <* doubS <* doubS <* chars *> reName)
 
+spaces :: RE' String
+spaces = many (psym isSpace)
 
-parseProgress :: Text -> Maybe Double
-parseProgress t
-  | last (T.unpack t) == '%' = let
-      s = T.unpack t
-      n = init s
-      m = read n :: Double
-      in
-       Just (m / 100)
-  | otherwise = Nothing
+chars :: RE' String
+chars = spaces *> many (psym (not . isSpace))
+
+int :: RE' Int
+int = read <$> intS
+
+intS :: RE' String
+intS = spaces *> many (psym isDigit)
+
+doubS :: RE' String
+doubS = (\a b c -> a ++ (b : c)) <$> intS <*> sym '.' <*> many (psym isDigit)
+
+num :: RE' Double
+num = read <$> (doubS <|> intS)
+
+reProgress :: RE' Fraction
+reProgress = F.fromNumber (0.0, 100.0) <$> num <* sym '%'
+
+reName :: RE' Text
+reName = T.pack <$> (spaces *> many anySym)
