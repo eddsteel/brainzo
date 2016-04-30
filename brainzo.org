@@ -1,7 +1,8 @@
 * General
+* Radio
+** Fix after turtle move
 * Google Music
 ** Search (all remaining terms)
-
 * Sound control
 ** TODO Move the xmonad stuff to brainzo?
 * System stuff
@@ -13,6 +14,9 @@
 ** TODO list (list)
 ** TODO use Fraction lib
 * Radio
-Switch to PID
+** DONE use Fraction lib
+   CLOSED: [2016-04-30 Sat 15:10]
+   - State "DONE"       from "TODO"       [2016-04-30 Sat 15:10]
+** TODO use Turtle's pattern matching
 * More?
 ** What should I cook (given ingredients and recipes dir)
