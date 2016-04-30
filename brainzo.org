@@ -14,5 +14,6 @@
 * transmission
 ** TODO add (add magnet link over remote and set ratio to 3
 ** TODO list (list)
+** TODO use Fraction lib
 * More?
-** What should I cook (given ingredients)
+** What should I cook (given ingredients and recipes dir)
