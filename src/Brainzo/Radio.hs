@@ -16,11 +16,16 @@ type Config    = Text
 type Stations  = Map Text Text
 data Direction = Bwd | Fwd
 
-npfile         :: FilePath
-npfile          = fromText "~/.radio-np"
+expandHome     :: FilePath -> Shell FilePath
+expandHome fpa  = do
+                    h <- format fp <$> home
+                    return $ (fromText . T.concat) [h, "/", format fp fpa]
 
-logfile        :: FilePath
-logfile         = fromText "~/.radio-log"
+npfile         :: Shell FilePath
+npfile          = expandHome ".radio-np"
+
+logfile        :: Shell FilePath
+logfile         = expandHome ".radio-log"
 
 orNoop         :: Maybe (Shell a) -> Shell a
 orNoop          = fromMaybe empty
@@ -38,22 +43,19 @@ radio _        (op:rest)             = (err (T.append (T.append "radio doesn't u
 
 -- run mplayer, piping to logfile
 mplayer        :: Text -> Shell ()
-mplayer url     = let
-                    out = inproc "mplayer" ["-really-quiet", url] empty
-                  in
-                    output logfile out
+mplayer url     = do
+  t <- inproc "mplayer" [url] empty
+  endless
 
 off            :: Shell ()
-off             = do
-                    inproc "killall" ["mplayer"] empty
-                    rm npfile
+off             = cat [inproc "killall" ["-q", "mplayer"] empty >> endless
+                      , withNP (\_ -> npfile >>= rm ) empty ]
 
 play           :: Text -> Text -> Shell ()
-play key url    = cat
-                    [ off
-                    , output npfile (return key)
-                    , mplayer url
-                    , np]
+play key url    = cat [off
+                  , npfile >>= \f -> output f (return key)
+                  , mplayer url
+                  , np]
 
 playByKey      :: Config -> Text -> Shell ()
 playByKey c s   = orNoop (play s <$> specified c)
@@ -61,19 +63,19 @@ playByKey c s   = orNoop (play s <$> specified c)
     specified = withStations (Map.lookup s)
 
 playNext         :: Direction -> Config -> Text -> Shell ()
-playNext d c key  = (uncurry play) (next c)
+playNext d c key  = uncurry play (next c)
   where
-    streams Fwd = Prelude.concat . repeat . Map.toList . parseStations
-    streams Bwd = Prelude.concat . repeat . reverse . Map.toList . parseStations
+    streams Fwd = withStations (Prelude.concat . repeat . Map.toList)
+    streams Bwd = withStations (Prelude.concat . repeat . reverse . Map.toList)
     second = head . tail
     next c = second (dropWhile ((/= key) . fst) (streams d c))
 
 playFirst      :: Config -> Shell ()
-playFirst c     = (uncurry play) first
+playFirst c     = uncurry play first
   where first = withStations (head . Map.toList) c
 
 list           :: Config -> Shell ()
-list            = withStations (\stns -> echo $ (T.unlines . Map.keys) stns)
+list            = withStations (echo . T.unlines . Map.keys)
 
 np             :: Shell ()
 np              = withNP echo (echo "off")
@@ -84,10 +86,12 @@ seek c          = withNP (playNext Fwd c) (playFirst c)
 kees           :: Config -> Shell ()
 kees c          = withNP (playNext Bwd c) (playFirst c)
 
-withNP          :: (Text -> Shell ()) -> (Shell ()) -> Shell ()
-withNP f g       = do
-                    b <- testfile npfile
-                    if b then (input npfile) >>= f else g
+withNP         :: (Text -> Shell ()) -> Shell () -> Shell ()
+withNP f g      = do
+                    nf <- npfile
+                    b <- testfile nf
+                    if b then input nf >>= f
+                      else g
 
 withStations   :: (Stations -> a) -> Config -> a
 withStations f  = f . parseStations

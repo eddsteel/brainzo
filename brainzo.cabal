@@ -7,7 +7,7 @@ license:             BSD3
 license-file:        LICENSE
 author:              Edward Steel
 maintainer:          edd@eddsteel.com
-copyright:           2015 Edward Steel
+copyright:           2015-2016 Edward Steel
 category:            Web
 build-type:          Simple
 -- extra-source-files:
@@ -33,7 +33,7 @@ library
 executable b
   hs-source-dirs:      app
   main-is:             Main.hs
-  ghc-options:         -threaded -rtsopts -with-rtsopts=-N
+  ghc-options:         -Wall -threaded -rtsopts -with-rtsopts=-N
   build-depends:       base
                      , brainzo
                      , turtle == 1.2.8
