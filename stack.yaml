@@ -1,5 +1,7 @@
 flags: {}
 packages:
 - '.'
-extra-deps: []
+extra-deps:
+- turtle-1.2.8
+- managed-1.0.5
 resolver: lts-3.9

@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Brainzo(dispatch, loadEnv) where
+module Brainzo(dispatch, loadEnv, parseArgs) where
 
 import Prelude hiding (FilePath, concat)
 import Brainzo.Data
@@ -20,9 +20,9 @@ dispatch e as            = cat (parseArgs e as)
 
 loadRequirement :: Text -> Shell (Text, Text)
 loadRequirement name = do
-  h <- home
-  let f = T.append "." name
-  contents <- input (fromText f)
+  h <- format fp <$> home
+  let f = T.concat [h, "/.", name]
+  contents <- (liftIO . readTextFile . fromText) f
   return (name, contents)
 
 loadEnv :: Shell Env
