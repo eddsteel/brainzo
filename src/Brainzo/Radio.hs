@@ -31,15 +31,18 @@ orNoop         :: Maybe (Shell a) -> Shell a
 orNoop          = fromMaybe empty
 
 radio                               :: Maybe Config -> [Text] -> (Shell (), [Text])
-radio (Just c) ("list":rest)         = ((list . parseStations) c, rest)
+radio (Just c) ("list":rest)         = (withStations list c, rest)
 radio (Just c) ("play":station:rest) = (((playByKey station) . parseStations) c, rest)
-radio (Just c) ("seek":rest)         = (seek (parseStations c), rest)
-radio (Just c) ("kees":rest)         = (kees (parseStations c), rest)
+radio (Just c) ("seek":rest)         = (withStations seek c, rest)
+radio (Just c) ("kees":rest)         = (withStations kees c, rest)
 radio _        ("off":rest)          = (off, rest)
 radio _        ("np":rest)           = (np, rest)
 radio Nothing  all                   = (err "radio needs some stations.", all)
 radio _        (op:rest)             = (err (T.append (T.append "radio doesn't understand " op) "."), rest)
 radio _        []                    = (err usage, [])
+
+withStations   :: (Stations -> a) -> Config -> a
+withStations f  = f . parseStations
 
 usage :: Text
 usage = "radio list|play <station>|seek|kees|off|np"
@@ -109,8 +112,6 @@ withNP f g      = do
                     if b then input nf >>= f
                       else g
 
-withStations   :: (Stations -> a) -> Config -> a
-withStations f  = f . parseStations
 
 -- TODO this seems to be effed now.
 parseStations  :: Config -> Stations
