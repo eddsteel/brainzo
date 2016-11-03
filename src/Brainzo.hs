@@ -5,6 +5,7 @@ import Prelude hiding (FilePath, concat)
 import Brainzo.Data
 import Brainzo.GoogleMaps(googleMap)
 import qualified Brainzo.Radio as Radio
+import qualified Brainzo.Keys as Keys
 import System.Process(runCommand, waitForProcess)
 import Control.Exception(Exception,catch,SomeException,bracket)
 import qualified Data.List.Utils as List
@@ -34,6 +35,7 @@ loadEnv = do
 parseArgs               :: Env -> [Text] -> [Shell ()]
 parseArgs e ("map":as)   = chompOp e googleMap as
 parseArgs e ("radio":as) = chompOp e (Radio.radio (Map.lookup "radio" e)) as
+parseArgs e ("key":as)   = chompOp e Keys.key as
 parseArgs _ []           = []
 parseArgs _ _            = [err "wat."]
 
