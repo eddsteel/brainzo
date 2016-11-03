@@ -31,21 +31,39 @@ orNoop         :: Maybe (Shell a) -> Shell a
 orNoop          = fromMaybe empty
 
 radio                               :: Maybe Config -> [Text] -> (Shell (), [Text])
-radio (Just c) ("list":rest)         = (list c, rest)
-radio (Just c) ("play":station:rest) = (playByKey c station, rest)
-radio (Just c) ("seek":rest)         = (seek c, rest)
-radio (Just c) ("kees":rest)         = (kees c, rest)
+radio (Just c) ("list":rest)         = ((list . parseStations) c, rest)
+radio (Just c) ("play":station:rest) = (((playByKey station) . parseStations) c, rest)
+radio (Just c) ("seek":rest)         = (seek (parseStations c), rest)
+radio (Just c) ("kees":rest)         = (kees (parseStations c), rest)
 radio _        ("off":rest)          = (off, rest)
 radio _        ("np":rest)           = (np, rest)
 radio Nothing  all                   = (err "radio needs some stations.", all)
 radio _        (op:rest)             = (err (T.append (T.append "radio doesn't understand " op) "."), rest)
+radio _        []                    = (err usage, [])
 
+usage :: Text
+usage = "radio list|play <station>|seek|kees|off|np"
 
--- run mplayer, piping to logfile
+mplayerOptions :: [Text]
+mplayerOptions = ["-prefer-ipv4", "-ao", "alsa"]
+
+-- ICY Info: StreamTitle='Angus & Julia Stone - Old Friend';StreamUrl='';
+icyFormat :: Pattern Text
+icyFormat = do
+  _ <- "ICY Info: StreamTitle='"
+  name <- chars
+  _ <- "';StreamUrl='';"
+  return name
+
+-- run mplayer
 mplayer        :: Text -> Shell ()
-mplayer url     = do
-  t <- inproc "mplayer" [url] empty
-  endless
+mplayer url     =
+  let
+    mplayerOut = inproc "mplayer" (url:mplayerOptions) empty
+    filtered = grep ( prefix "ICY Info:") mplayerOut
+    formatted = sed icyFormat filtered
+  in
+    stdout formatted
 
 off            :: Shell ()
 off             = cat [inproc "killall" ["-q", "mplayer"] empty >> endless
@@ -57,33 +75,31 @@ play key url    = cat [off
                   , mplayer url
                   , np]
 
-playByKey      :: Config -> Text -> Shell ()
-playByKey c s   = orNoop (play s <$> specified c)
-  where
-    specified = withStations (Map.lookup s)
+playByKey      :: Text -> Stations -> Shell ()
+playByKey s ss  = orNoop (play s <$> Map.lookup s ss)
 
-playNext         :: Direction -> Config -> Text -> Shell ()
+
+playNext         :: Direction -> Stations -> Text -> Shell ()
 playNext d c key  = uncurry play (next c)
   where
-    streams Fwd = withStations (Prelude.concat . repeat . Map.toList)
-    streams Bwd = withStations (Prelude.concat . repeat . reverse . Map.toList)
+    streams Fwd = Prelude.concat . repeat . Map.toList
+    streams Bwd = Prelude.concat . repeat . reverse . Map.toList
     second = head . tail
     next c = second (dropWhile ((/= key) . fst) (streams d c))
 
-playFirst      :: Config -> Shell ()
-playFirst c     = uncurry play first
-  where first = withStations (head . Map.toList) c
+playFirst      :: Stations -> Shell ()
+playFirst       = (uncurry play . (head . Map.toList))
 
-list           :: Config -> Shell ()
-list            = withStations (echo . T.unlines . Map.keys)
+list           :: Stations -> Shell ()
+list            = echo . T.unlines . Map.keys
 
 np             :: Shell ()
 np              = withNP echo (echo "off")
 
-seek           :: Config -> Shell ()
+seek           :: Stations -> Shell ()
 seek c          = withNP (playNext Fwd c) (playFirst c)
 
-kees           :: Config -> Shell ()
+kees           :: Stations -> Shell ()
 kees c          = withNP (playNext Bwd c) (playFirst c)
 
 withNP         :: (Text -> Shell ()) -> Shell () -> Shell ()
@@ -96,6 +112,7 @@ withNP f g      = do
 withStations   :: (Stations -> a) -> Config -> a
 withStations f  = f . parseStations
 
+-- TODO this seems to be effed now.
 parseStations  :: Config -> Stations
 parseStations s = Map.fromList $ foldr tupleOrDrop [] (T.words <$> T.lines s)
   where tupleOrDrop [a, b] agg = (a, b):agg
