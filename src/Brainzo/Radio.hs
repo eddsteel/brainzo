@@ -53,9 +53,10 @@ mplayerOptions = ["-prefer-ipv4", "-ao", "alsa"]
 -- ICY Info: StreamTitle='Angus & Julia Stone - Old Friend';StreamUrl='';
 icyFormat :: Pattern Text
 icyFormat = do
-  _ <- "ICY Info: StreamTitle='"
-  name <- chars
-  _ <- "';StreamUrl='';"
+--  (title:_) <- chars `sepBy` "';"
+  _ <- "ICY Info: StreamTitle="
+  name <- between (char '\'') (char '\'') (star (notChar '\''))
+  _ <- chars
   return name
 
 -- run mplayer
