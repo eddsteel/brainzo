@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 module Brainzo.GoogleMapsSpec where
 
 import Test.Hspec
