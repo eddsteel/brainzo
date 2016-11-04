@@ -43,7 +43,7 @@ doRadio :: Config -> [Text] -> (Stations -> Shell()) -> (Shell (), [Text])
 doRadio c rest f = ((parseStations >>> f) c, rest)
 
 usage          :: Text
-usage           = "radio list|play <station>|seek|kees|off|np"
+usage           = "radio list|play <station>|on|off|seek|kees|off|np"
 
 list           :: Stations -> Shell ()
 list            = echo . T.unlines . Map.keys
