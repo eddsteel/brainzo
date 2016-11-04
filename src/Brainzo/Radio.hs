@@ -1,16 +1,16 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Brainzo.Radio(radio) where
+module Brainzo.Radio(radio, icyFormat) where
 
-import Prelude hiding (FilePath)
-import Brainzo.Data
-import Control.Monad((=<<))
+import Control.Arrow((>>>))
+import Data.List(find)
+import Data.Map(Map, toList)
 import Data.Maybe(fromMaybe)
-import Data.Map(Map)
-import qualified Data.Map as Map
+import Data.Text()
 import Filesystem.Path.CurrentOS hiding (empty)
-import Data.Text(Text)
+import Prelude hiding (FilePath)
+import Turtle hiding (find)
+import qualified Data.Map as Map
 import qualified Data.Text as T
-import Turtle
 
 type Config    = Text
 type Stations  = Map Text Text
@@ -24,75 +24,26 @@ expandHome fpa  = do
 npfile         :: Shell FilePath
 npfile          = expandHome ".radio-np"
 
-logfile        :: Shell FilePath
-logfile         = expandHome ".radio-log"
-
 orNoop         :: Maybe (Shell a) -> Shell a
 orNoop          = fromMaybe empty
 
 radio                               :: Maybe Config -> [Text] -> (Shell (), [Text])
-radio (Just c) ("list":rest)         = (withStations list c, rest)
-radio (Just c) ("play":station:rest) = (((playByKey station) . parseStations) c, rest)
-radio (Just c) ("seek":rest)         = (withStations seek c, rest)
-radio (Just c) ("kees":rest)         = (withStations kees c, rest)
+radio (Just c) ("list":rest)         = doRadio c rest list
+radio (Just c) ("play":station:rest) = doRadio c rest $ playByKey station
+radio (Just c) ("seek":rest)         = doRadio c rest seek
+radio (Just c) ("kees":rest)         = doRadio c rest kees
+radio (Just c) ("on":rest)           = doRadio c rest on
 radio _        ("off":rest)          = (off, rest)
 radio _        ("np":rest)           = (np, rest)
-radio Nothing  all                   = (err "radio needs some stations.", all)
+radio Nothing  rest                  = (err "radio needs some stations.", rest)
 radio _        (op:rest)             = (err (T.append (T.append "radio doesn't understand " op) "."), rest)
 radio _        []                    = (err usage, [])
 
-withStations   :: (Stations -> a) -> Config -> a
-withStations f  = f . parseStations
+doRadio :: Config -> [Text] -> (Stations -> Shell()) -> (Shell (), [Text])
+doRadio c rest f = ((parseStations >>> f) c, rest)
 
-usage :: Text
-usage = "radio list|play <station>|seek|kees|off|np"
-
-mplayerOptions :: [Text]
-mplayerOptions = ["-prefer-ipv4", "-ao", "alsa"]
-
--- ICY Info: StreamTitle='Angus & Julia Stone - Old Friend';StreamUrl='';
-icyFormat :: Pattern Text
-icyFormat = do
---  (title:_) <- chars `sepBy` "';"
-  _ <- "ICY Info: StreamTitle="
-  name <- between (char '\'') (char '\'') (star (notChar '\''))
-  _ <- chars
-  return name
-
--- run mplayer
-mplayer        :: Text -> Shell ()
-mplayer url     =
-  let
-    mplayerOut = inproc "mplayer" (url:mplayerOptions) empty
-    filtered = grep ( prefix "ICY Info:") mplayerOut
-    formatted = sed icyFormat filtered
-  in
-    stdout formatted
-
-off            :: Shell ()
-off             = cat [inproc "killall" ["-q", "mplayer"] empty >> endless
-                      , withNP (\_ -> npfile >>= rm ) empty ]
-
-play           :: Text -> Text -> Shell ()
-play key url    = cat [off
-                  , npfile >>= \f -> output f (return key)
-                  , mplayer url
-                  , np]
-
-playByKey      :: Text -> Stations -> Shell ()
-playByKey s ss  = orNoop (play s <$> Map.lookup s ss)
-
-
-playNext         :: Direction -> Stations -> Text -> Shell ()
-playNext d c key  = uncurry play (next c)
-  where
-    streams Fwd = Prelude.concat . repeat . Map.toList
-    streams Bwd = Prelude.concat . repeat . reverse . Map.toList
-    second = head . tail
-    next c = second (dropWhile ((/= key) . fst) (streams d c))
-
-playFirst      :: Stations -> Shell ()
-playFirst       = (uncurry play . (head . Map.toList))
+usage          :: Text
+usage           = "radio list|play <station>|seek|kees|off|np"
 
 list           :: Stations -> Shell ()
 list            = echo . T.unlines . Map.keys
@@ -106,13 +57,68 @@ seek c          = withNP (playNext Fwd c) (playFirst c)
 kees           :: Stations -> Shell ()
 kees c          = withNP (playNext Bwd c) (playFirst c)
 
+on             :: Stations -> Shell ()
+on c            = withNP (playCurrent c) (playFirst c)
+
+off            :: Shell ()
+off             = cat [inproc "killall" ["-q", "mplayer"] empty >> endless
+                      , withNP (\_ -> npfile >>= rm ) empty ]
+
+play           :: Text -> Text -> Shell ()
+play key url    = cat [off
+                  , npfile >>= \f -> output f (return key)
+                  , mplayer url
+                  , np]
+
+
+mplayerOptions :: [Text]
+mplayerOptions = ["-prefer-ipv4", "-ao", "alsa"]
+
+icyPrefix :: Pattern Text
+icyPrefix = "ICY Info: StreamTitle"
+
+-- ICY Info: StreamTitle='Angus & Julia Stone - Old Friend';StreamUrl='';
+icyFormat :: Pattern Text
+icyFormat = do
+  choice
+    [ has $ between (icyPrefix <> "='") ("';StreamUrl='" <> chars) chars
+    , has $ between (icyPrefix <> "='") "';" chars] -- :(
+
+-- run mplayer
+mplayer        :: Text -> Shell ()
+mplayer url     =
+  let
+    mplayerO  = inproc "mplayer" (url:mplayerOptions) empty
+    filtered  = grep (prefix icyPrefix) mplayerO
+    formatted = sed icyFormat filtered
+  in
+    stdout formatted
+
+playByKey      :: Text -> Stations -> Shell ()
+playByKey s ss  = orNoop (play s <$> Map.lookup s ss)
+
+playNext         :: Direction -> Stations -> Text -> Shell ()
+playNext d c key  = uncurry play (next c)
+  where
+    streams Fwd = Prelude.concat . repeat . Map.toList
+    streams Bwd = Prelude.concat . repeat . reverse . Map.toList
+    second = head . tail
+    next c = second (dropWhile ((/= key) . fst) (streams d c))
+
+playFirst      :: Stations -> Shell ()
+playFirst       = (uncurry play . (head . Map.toList))
+
+playCurrent    :: Stations -> Text -> Shell ()
+playCurrent s k = uncurry play current
+  where current = head $ filter ((== k) . fst) (toList s)
+
 withNP         :: (Text -> Shell ()) -> Shell () -> Shell ()
 withNP f g      = do
                     nf <- npfile
                     b <- testfile nf
-                    if b then input nf >>= f
+                    if b
+                      then input nf >>= f
                       else g
-
 
 -- TODO this seems to be effed now.
 parseStations  :: Config -> Stations
