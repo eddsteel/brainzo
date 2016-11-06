@@ -1,12 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Brainzo.Radio(radio, icyFormat) where
 
+import Brainzo.File(expandHome)
 import Control.Arrow((>>>))
 import Data.List(find)
 import Data.Map(Map, toList)
 import Data.Maybe(fromMaybe)
-import Data.Text()
-import Filesystem.Path.CurrentOS hiding (empty)
 import Prelude hiding (FilePath)
 import Turtle hiding (find)
 import qualified Data.Map as Map
@@ -15,11 +14,6 @@ import qualified Data.Text as T
 type Config    = Text
 type Stations  = Map Text Text
 data Direction = Bwd | Fwd
-
-expandHome     :: FilePath -> Shell FilePath
-expandHome fpa  = do
-                    h <- format fp <$> home
-                    return $ (fromText . T.concat) [h, "/", format fp fpa]
 
 npfile         :: Shell FilePath
 npfile          = expandHome ".radio-np"

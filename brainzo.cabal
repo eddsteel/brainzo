@@ -20,6 +20,7 @@ library
                      , Brainzo.GoogleMaps
                      , Brainzo.Data
                      , Brainzo.Keys
+                     , Brainzo.File
   build-depends:       base >= 4.7 && < 5
                      , process
                      , MissingH
