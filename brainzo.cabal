@@ -23,6 +23,7 @@ library
                      , Brainzo.Data.Storage
                      , Brainzo.Keys
                      , Brainzo.File
+                     , Brainzo.DB.RadioDB
   build-depends:       base >= 4.7 && < 5
                      , process
                      , MissingH
