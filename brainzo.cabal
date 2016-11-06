@@ -19,6 +19,8 @@ library
                      , Brainzo.Radio
                      , Brainzo.GoogleMaps
                      , Brainzo.Data
+                     , Brainzo.Data.NowPlaying
+                     , Brainzo.Data.Storage
                      , Brainzo.Keys
                      , Brainzo.File
   build-depends:       base >= 4.7 && < 5
