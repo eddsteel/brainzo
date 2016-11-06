@@ -27,9 +27,12 @@ library
                      , containers
                      , directory
                      , strict
-                     , turtle == 1.2.8
+                     , turtle
                      , text
                      , system-filepath
+                     , sqlite-simple
+                     , time
+                     , foldl
   default-language:    Haskell2010
 
 executable b
@@ -38,7 +41,7 @@ executable b
   ghc-options:         -Wall -threaded -rtsopts -with-rtsopts=-N
   build-depends:       base
                      , brainzo
-                     , turtle == 1.2.8
+                     , turtle
                      , text
   default-language:    Haskell2010
 
@@ -50,8 +53,8 @@ test-suite brainzo-test
                      , hspec
                      , brainzo
                      , text
-                     , turtle == 1.2.8
   ghc-options:         -O2 -Wall -threaded -rtsopts -with-rtsopts=-N
+                     , turtle
   default-language:    Haskell2010
 
 source-repository head
