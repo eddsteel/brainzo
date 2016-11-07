@@ -10,8 +10,8 @@ import Brainzo.File(expandHomeIO)
 import Brainzo.Data.NowPlaying
 import Brainzo.Data.Storage
 import Data.Text hiding (head)
-import Prelude hiding (FilePath)
-import Filesystem.Path.CurrentOS hiding (empty)
+import Prelude hiding (FilePath, concat)
+import Filesystem.Path.CurrentOS hiding (empty, concat)
 import Database.SQLite.Simple
 import Database.SQLite.Simple.FromRow
 import Turtle(sh)
@@ -50,10 +50,13 @@ instance NPStorage RadioDB where
     np <- (query_ c "select * from radio_now_playing order by id desc limit 1") :: IO [NowPlaying]
     mapM print np
     return $ head np
-  store np = withDB $ \c -> do
-    execute c "insert into radio_now_playing (station, track, playedOn) values (?, ?, datetime('now'));"
-      (station np, track np)
-    return ()
+  store np = withDB $ \c ->
+    let st = station np
+        tr = track np
+    in do
+      execute c "insert into radio_now_playing (station, track, playedOn) values (?, ?, datetime('now'));"
+        (st, tr)
+      return $ concat [st, " - ", tr]
 
 main :: IO ()
 main = do

@@ -4,7 +4,8 @@ module Brainzo.Data.Storage( NPStorage
                            )  where
 
 import Brainzo.Data.NowPlaying
+import Data.Text
 
 class NPStorage s where
   retrieve :: s -> IO NowPlaying
-  store    :: NowPlaying -> s -> IO ()
+  store    :: NowPlaying -> s -> IO Text

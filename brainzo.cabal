@@ -25,17 +25,18 @@ library
                      , Brainzo.File
                      , Brainzo.DB.RadioDB
   build-depends:       base >= 4.7 && < 5
-                     , process
                      , MissingH
                      , containers
                      , directory
-                     , strict
-                     , turtle
-                     , text
-                     , system-filepath
-                     , sqlite-simple
-                     , time
                      , foldl
+                     , process
+                     , safe
+                     , sqlite-simple
+                     , strict
+                     , system-filepath
+                     , text
+                     , time
+                     , turtle
   default-language:    Haskell2010
 
 executable b
