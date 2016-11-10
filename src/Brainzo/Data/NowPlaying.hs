@@ -3,8 +3,8 @@ module Brainzo.Data.NowPlaying( NowPlaying
                               , station
                               , track
                               , playedOn
-                              , np
-                              , fromText) where
+                              , fromStationTrack
+                              , np) where
 
 import Data.Text
 import Data.Time.Clock(UTCTime)
@@ -17,11 +17,11 @@ data NowPlaying = NP { npId :: Maybe Integer
                      , track :: Text
                      , playedOn :: Maybe UTCTime } deriving Show
 
-np :: Maybe Integer -> Text -> Text -> Maybe UTCTime -> NowPlaying
-np i s t o = NP { npId = i, station = s, track = t, playedOn = o }
+np        :: Maybe Integer ->  Maybe UTCTime -> Text -> Text -> NowPlaying
+np i o s t = NP { npId = i, station = s, track = t, playedOn = o }
 
-fromText :: Text -> Maybe NowPlaying
-fromText  = fmap (\(a,b) -> np Nothing a b Nothing) . headMay . match npPattern
+fromStationTrack :: Text -> Text -> NowPlaying
+fromStationTrack  = np Nothing Nothing
 
 npPattern :: Pattern (Text, Text)
 npPattern = do

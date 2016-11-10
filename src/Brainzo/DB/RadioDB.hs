@@ -15,6 +15,7 @@ import Filesystem.Path.CurrentOS hiding (empty, concat)
 import Database.SQLite.Simple
 import Database.SQLite.Simple.FromRow
 import Turtle(sh)
+import System.Directory(doesFileExist)
 
 data RadioDB = DB Text deriving Show
 
@@ -26,10 +27,13 @@ instance FromRow Int where
 
 newDB :: IO RadioDB
 newDB  = do
-  fp <- DB <$> expandHomeIO ".brainzo/radio.db"
-  -- if DB doesn't exist, run init DB
-  -- TODO ^ how to work out "exists"?
-  return fp
+  path <- expandHomeIO ".brainzo/radio.db"
+  let db = (DB path)
+  -- we'll assume if the file exists there's a DB in it. No worries bruh.
+  exists <- doesFileExist $ unpack path
+  if exists
+    then return db
+    else initDB db >> return db
 
 dbFile :: RadioDB -> String
 dbFile (DB f) = unpack f
@@ -61,6 +65,6 @@ instance NPStorage RadioDB where
 main :: IO ()
 main = do
   db <- newDB
-  store (np Nothing "Hi" "Yo" Nothing) db
+  _ <- store (np Nothing Nothing "Hi" "Yo") db
   _ <- retrieve db
   return ()

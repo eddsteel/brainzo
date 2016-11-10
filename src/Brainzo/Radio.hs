@@ -1,13 +1,16 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Brainzo.Radio(radio, icyFormat) where
 
+import Brainzo.DB.RadioDB
+import Brainzo.Data.NowPlaying(NowPlaying, fromStationTrack)
+import qualified Brainzo.Data.Storage as DB
 import Brainzo.File(expandHome)
-import Control.Arrow((>>>))
+import Control.Monad((=<<))
 import Data.List(find)
 import Data.Map(Map, toList)
 import Data.Maybe(fromMaybe)
 import Prelude hiding (FilePath)
-import Turtle hiding (find)
+import Turtle hiding (find, fromText)
 import qualified Data.Map as Map
 import qualified Data.Text as T
 
@@ -22,7 +25,7 @@ orNoop         :: Maybe (Shell a) -> Shell a
 orNoop          = fromMaybe empty
 
 radio                               :: Maybe Config -> [Text] -> (Shell (), [Text])
-radio (Just c) ("list":rest)         = doRadio c rest list
+radio (Just c) ("list":rest)         = ((list . parseStations) c, rest)
 radio (Just c) ("play":station:rest) = doRadio c rest $ playByKey station
 radio (Just c) ("seek":rest)         = doRadio c rest seek
 radio (Just c) ("kees":rest)         = doRadio c rest kees
@@ -33,8 +36,11 @@ radio Nothing  rest                  = (err "radio needs some stations.", rest)
 radio _        (op:rest)             = (err (T.append (T.append "radio doesn't understand " op) "."), rest)
 radio _        []                    = (err usage, [])
 
-doRadio :: Config -> [Text] -> (Stations -> Shell()) -> (Shell (), [Text])
-doRadio c rest f = ((parseStations >>> f) c, rest)
+doRadio :: Config -> [Text] -> (Stations -> RadioDB -> Shell()) -> (Shell (), [Text])
+doRadio c rest fn = (action, rest)
+  where action = do
+          db <- liftIO newDB
+          fn (parseStations c) db
 
 usage          :: Text
 usage           = "radio list|play <station>|on|off|seek|kees|off|np"
@@ -45,25 +51,26 @@ list            = echo . T.unlines . Map.keys
 np             :: Shell ()
 np              = withNP echo (echo "off")
 
-seek           :: Stations -> Shell ()
-seek c          = withNP (playNext Fwd c) (playFirst c)
+seek           :: Stations -> RadioDB -> Shell ()
+seek c db       = withNP (playNext Fwd c db) (playFirst c db)
 
-kees           :: Stations -> Shell ()
-kees c          = withNP (playNext Bwd c) (playFirst c)
+kees           :: Stations -> RadioDB -> Shell ()
+kees c db       = withNP (playNext Bwd c db) (playFirst c db)
 
-on             :: Stations -> Shell ()
-on c            = withNP (playCurrent c) (playFirst c)
+on             :: Stations -> RadioDB -> Shell ()
+on c db         = withNP (playCurrent c db) (playFirst c db)
 
 off            :: Shell ()
 off             = cat [inproc "killall" ["-q", "mplayer"] empty >> endless
                       , withNP (\_ -> npfile >>= rm ) empty ]
 
-play           :: Text -> Text -> Shell ()
-play key url    = cat [off
-                  , npfile >>= \f -> output f (return key)
-                  , mplayer url
-                  , np]
-
+play           :: RadioDB -> Text -> Text -> Shell ()
+play db key url = cat [off
+                      , npfile >>= \file -> output file (return key)
+                      , echo key
+                      , stdout $ store . fromStationTrack key =<< mplayer url]
+  where store :: NowPlaying -> Shell Text
+        store np = liftIO (DB.store np db)
 
 mplayerOptions :: [Text]
 mplayerOptions = ["-prefer-ipv4", "-ao", "alsa"]
@@ -79,31 +86,30 @@ icyFormat = do
     , has $ between (icyPrefix <> "='") "';" chars] -- :(
 
 -- run mplayer
-mplayer        :: Text -> Shell ()
+mplayer        :: Text -> Shell Text
 mplayer url     =
   let
     mplayerO  = inproc "mplayer" (url:mplayerOptions) empty
     filtered  = grep (prefix icyPrefix) mplayerO
-    formatted = sed icyFormat filtered
   in
-    stdout formatted
+    sed icyFormat filtered
 
-playByKey      :: Text -> Stations -> Shell ()
-playByKey s ss  = orNoop (play s <$> Map.lookup s ss)
+playByKey        :: Text -> Stations -> RadioDB -> Shell ()
+playByKey s ss db = orNoop (play db s <$> Map.lookup s ss)
 
-playNext         :: Direction -> Stations -> Text -> Shell ()
-playNext d c key  = uncurry play (next c)
+playNext            :: Direction -> Stations -> RadioDB -> Text -> Shell ()
+playNext d c db key  = uncurry (play db) (next c)
   where
     streams Fwd = Prelude.concat . repeat . Map.toList
     streams Bwd = Prelude.concat . repeat . reverse . Map.toList
     second = head . tail
     next c = second (dropWhile ((/= key) . fst) (streams d c))
 
-playFirst      :: Stations -> Shell ()
-playFirst       = (uncurry play . (head . Map.toList))
+playFirst      :: Stations -> RadioDB -> Shell ()
+playFirst s db  = (uncurry (play db) . (head . Map.toList)) s
 
-playCurrent    :: Stations -> Text -> Shell ()
-playCurrent s k = uncurry play current
+playCurrent       :: Stations -> RadioDB -> Text -> Shell ()
+playCurrent s db k = uncurry (play db) current
   where current = head $ filter ((== k) . fst) (toList s)
 
 withNP         :: (Text -> Shell ()) -> Shell () -> Shell ()
