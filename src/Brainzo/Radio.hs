@@ -2,7 +2,7 @@
 module Brainzo.Radio(radio, icyFormat) where
 
 import Brainzo.DB.RadioDB
-import Brainzo.Data.NowPlaying(NowPlaying, fromStationTrack)
+import Brainzo.Data.NowPlaying(NowPlaying, fromStationTrack, toStationTrack)
 import qualified Brainzo.Data.Storage as DB
 import Brainzo.File(expandHome)
 import Control.Monad((=<<))
@@ -31,7 +31,7 @@ radio (Just c) ("seek":rest)         = doRadio c rest seek
 radio (Just c) ("kees":rest)         = doRadio c rest kees
 radio (Just c) ("on":rest)           = doRadio c rest on
 radio _        ("off":rest)          = (off, rest)
-radio _        ("np":rest)           = (np, rest)
+radio _        ("np":rest)           = doRadio "" rest np
 radio Nothing  rest                  = (err "radio needs some stations.", rest)
 radio _        (op:rest)             = (err (T.append (T.append "radio doesn't understand " op) "."), rest)
 radio _        []                    = (err usage, [])
@@ -48,8 +48,10 @@ usage           = "radio list|play <station>|on|off|seek|kees|off|np"
 list           :: Stations -> Shell ()
 list            = echo . T.unlines . Map.keys
 
-np             :: Shell ()
-np              = withNP echo (echo "off")
+np             :: Stations -> RadioDB -> Shell ()
+np _ db         = withNP nowPlaying (echo "off")
+  where nowPlaying :: Text -> Shell ()
+        nowPlaying _ = liftIO $ fmap toStationTrack (DB.retrieve db) >>= echo
 
 seek           :: Stations -> RadioDB -> Shell ()
 seek c db       = withNP (playNext Fwd c db) (playFirst c db)
@@ -69,8 +71,8 @@ play db key url = cat [off
                       , npfile >>= \file -> output file (return key)
                       , echo key
                       , stdout $ store . fromStationTrack key =<< mplayer url]
-  where store :: NowPlaying -> Shell Text
-        store np = liftIO (DB.store np db)
+  where store  :: NowPlaying -> Shell Text
+        store n = liftIO (DB.store n db)
 
 mplayerOptions :: [Text]
 mplayerOptions = ["-prefer-ipv4", "-ao", "alsa"]
@@ -120,7 +122,6 @@ withNP f g      = do
                       then input nf >>= f
                       else g
 
--- TODO this seems to be effed now.
 parseStations  :: Config -> Stations
 parseStations s = Map.fromList $ foldr tupleOrDrop [] (T.words <$> T.lines s)
   where tupleOrDrop [a, b] agg = (a, b):agg

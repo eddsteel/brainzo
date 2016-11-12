@@ -10,20 +10,12 @@ import Brainzo.File(expandHomeIO)
 import Brainzo.Data.NowPlaying
 import Brainzo.Data.Storage
 import Data.Text hiding (head)
-import Prelude hiding (FilePath, concat)
+import Prelude hiding (FilePath, concat, unlines)
 import Filesystem.Path.CurrentOS hiding (empty, concat)
 import Database.SQLite.Simple
-import Database.SQLite.Simple.FromRow
-import Turtle(sh)
 import System.Directory(doesFileExist)
 
-data RadioDB = DB Text deriving Show
-
-instance FromRow NowPlaying where
-  fromRow = np <$> field <*> field <*> field <*> field
-
-instance FromRow Int where
-  fromRow = field
+data RadioDB = DB Text
 
 newDB :: IO RadioDB
 newDB  = do
@@ -47,19 +39,24 @@ withDB f r = do
 
 initDB :: RadioDB -> IO ()
 initDB  = withDB $ \c -> do
-  execute_ c "create table radio_now_playing (id integer primary key, station text, track text, playedOn date);"
+  execute_ c $ Query (
+    unlines [ "create table radio_now_playing "
+            , "(id integer primary key, station text, track text, playedOn timestamp);"])
 
 instance NPStorage RadioDB where
   retrieve = withDB $ \c -> do
-    np <- (query_ c "select * from radio_now_playing order by id desc limit 1") :: IO [NowPlaying]
-    mapM print np
+    np <- (query_ c $ Query (
+              unlines [ "select id, station, track, playedOn "
+                      , "from radio_now_playing "
+                      , "order by id desc limit 1"])) :: IO [NowPlaying]
     return $ head np
   store np = withDB $ \c ->
     let st = station np
         tr = track np
     in do
-      execute c "insert into radio_now_playing (station, track, playedOn) values (?, ?, datetime('now'));"
-        (st, tr)
+      execute c (Query (
+        unlines [ "insert into radio_now_playing (station, track, playedOn) "
+                , "values (?, ?, datetime('now'));"])) (st, tr)
       return $ concat [st, " - ", tr]
 
 main :: IO ()
