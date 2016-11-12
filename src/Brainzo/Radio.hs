@@ -69,8 +69,10 @@ off             = cat [inproc "killall" ["-q", "mplayer"] empty >> endless
 play           :: RadioDB -> Text -> Text -> Shell ()
 play db key url = cat [off
                       , npfile >>= \file -> output file (return key)
-                      , echo key
-                      , stdout $ store . fromStationTrack key =<< mplayer url]
+                      -- play radio, piping NP to store. Start with empty string
+                      -- so that we get an entry for stations that don't publish
+                      -- now playing info.
+                      , stdout $ store . fromStationTrack key =<< cat [pure "", mplayer url]]
   where store  :: NowPlaying -> Shell Text
         store n = liftIO (DB.store n db)
 
