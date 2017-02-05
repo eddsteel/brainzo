@@ -2,7 +2,7 @@
 module Brainzo.Radio(radio, icyFormat) where
 
 import Brainzo.DB.RadioDB
-import Brainzo.Data.NowPlaying(NowPlaying, fromStationTrack, toStationTrack)
+import Brainzo.Data.NowPlaying(NowPlaying, fromStationTrack, toStationTrack, station)
 import qualified Brainzo.Data.Storage as DB
 import Brainzo.File(expandHome)
 import Control.Monad((=<<))
@@ -21,6 +21,9 @@ data Direction = Bwd | Fwd
 npfile         :: Shell FilePath
 npfile          = expandHome ".radio-np"
 
+pidfile        :: Shell FilePath
+pidfile         = expandHome ".brainzo/radio.pid"
+
 orNoop         :: Maybe (Shell a) -> Shell a
 orNoop          = fromMaybe empty
 
@@ -32,6 +35,7 @@ radio (Just c) ("kees":rest)         = doRadio c rest kees
 radio (Just c) ("on":rest)           = doRadio c rest on
 radio _        ("off":rest)          = (off, rest)
 radio _        ("np":rest)           = doRadio "" rest np
+radio _        ("nps":rest)          = doRadio "" rest nps
 radio Nothing  rest                  = (err "radio needs some stations.", rest)
 radio _        (op:rest)             = (err (T.append (T.append "radio doesn't understand " op) "."), rest)
 radio _        []                    = (err usage, [])
@@ -43,7 +47,7 @@ doRadio c rest fn = (action, rest)
           fn (parseStations c) db
 
 usage          :: Text
-usage           = "radio list|play <station>|on|off|seek|kees|off|np"
+usage           = "radio list|play <station>|on|off|seek|kees|off|np|nps"
 
 list           :: Stations -> Shell ()
 list            = echo . T.unlines . Map.keys
@@ -52,6 +56,9 @@ np             :: Stations -> RadioDB -> Shell ()
 np _ db         = withNP nowPlaying (echo "off")
   where nowPlaying :: Text -> Shell ()
         nowPlaying _ = liftIO $ fmap toStationTrack (DB.retrieve db) >>= echo
+
+nps            :: Stations -> RadioDB -> Shell ()
+nps _ db        = liftIO $ station <$> DB.retrieve db >>= echo
 
 seek           :: Stations -> RadioDB -> Shell ()
 seek c db       = withNP (playNext Fwd c db) (playFirst c db)
