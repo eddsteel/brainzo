@@ -16,14 +16,17 @@ cabal-version:       >=1.10
 library
   hs-source-dirs:      src
   exposed-modules:     Brainzo
-                     , Brainzo.Radio
-                     , Brainzo.GoogleMaps
+                     , Brainzo.Apps
+                     , Brainzo.Commands
+                     , Brainzo.Commands.Radio
+                     , Brainzo.Commands.GoogleMaps
+                     , Brainzo.Commands.Keys
                      , Brainzo.Data
                      , Brainzo.Data.NowPlaying
                      , Brainzo.Data.Storage
-                     , Brainzo.Keys
-                     , Brainzo.File
+                     , Brainzo.DB.BrainzoDB
                      , Brainzo.DB.RadioDB
+                     , Brainzo.File
   build-depends:       base >= 4.7 && < 5
                      , MissingH
                      , containers

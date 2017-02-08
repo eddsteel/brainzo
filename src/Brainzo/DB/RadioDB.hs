@@ -11,7 +11,6 @@ import Brainzo.Data.NowPlaying
 import Brainzo.Data.Storage
 import Data.Text hiding (head)
 import Prelude hiding (FilePath, concat, unlines)
-import Filesystem.Path.CurrentOS hiding (empty, concat)
 import Database.SQLite.Simple
 import System.Directory(doesFileExist)
 

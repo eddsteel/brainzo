@@ -19,3 +19,6 @@ expandHomeIO  :: FilePath -> IO Text
 expandHomeIO f = do
   fs <- (toList . expandHome) f
   return (format fp (head fs))
+
+brainzoFile :: Text -> Shell FilePath
+brainzoFile t = expandHome . fromText . T.concat $ [".brainzo/", t]

@@ -1,43 +1,52 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Brainzo(dispatch, loadEnv, parseArgs) where
+module Brainzo where
 
 import Prelude hiding (FilePath, concat)
 import Brainzo.Data
-import Brainzo.GoogleMaps(googleMap)
-import qualified Brainzo.Radio as Radio
-import qualified Brainzo.Keys as Keys
-import System.Process(runCommand, waitForProcess)
-import Control.Exception(Exception,catch,SomeException,bracket)
-import qualified Data.List.Utils as List
-import Data.Text(Text)
+import Brainzo.Commands
+import qualified Brainzo.DB.BrainzoDB as DB
+import Data.List.NonEmpty(NonEmpty((:|)))
+import qualified Data.Map as M
 import qualified Data.Text as T
-import qualified Data.Map as Map
-import qualified System.IO.Strict as Strict
-import Filesystem.Path.CurrentOS hiding (empty)
 import Turtle
 
-dispatch                :: Env -> [Text] -> Shell ()
-dispatch e as            = cat (parseArgs e as)
+birth :: Shell Brainzo
+birth = do
+  e  <- loadEnv
+  db <- liftIO DB.new
+  return $ Brainzo e db
 
-loadRequirement :: Text -> Shell (Text, Text)
+getToWork         :: Brainzo -> [Text] -> Shell ()
+getToWork b (a:as) = goDo (M.lookup a commands) b as
+getToWork _ []     = return ()
+
+goDo :: Maybe Command -> Brainzo -> [Text] -> Shell ()
+goDo Nothing _ _       = err brainzoUsage
+goDo (Just c) _ []     = err (usage c)
+goDo (Just c) b (t:ts) = chompOp (t:|ts) (entryPoint c)
+  where
+    chompOp (a:|as) step =
+      let (workDone, rest) = step b (a:|as)
+      in cat [workDone, getToWork b rest]
+
+brainzoUsage :: Text
+brainzoUsage = T.unlines . mconcat $
+  [[ "I am Brainzo. Bleep bloop."
+   , ""
+   , "Known commands:"]
+  , fmap ((T.append "  - ") . commandName) . M.elems $ commands
+  , [ ""
+    , "Share and Enjoy."]]
+
+loadRequirement :: Text -> Shell Requirement
 loadRequirement name = do
   h <- format fp <$> home
-  let f = T.concat [h, "/.", name]
-  contents <- (liftIO . readTextFile . fromText) f
+  let reqFile = T.concat [h, "/.brainzo/", name]
+  contents <- (liftIO . readTextFile . fromText) reqFile
   return (name, contents)
 
 loadEnv :: Shell Env
-loadEnv = do
-  r <- loadRequirement "radio"
-  -- load other requirements here.
-  return (Map.fromList [r])
-
-parseArgs               :: Env -> [Text] -> [Shell ()]
-parseArgs e ("map":as)   = chompOp e googleMap as
-parseArgs e ("radio":as) = chompOp e (Radio.radio (Map.lookup "radio" e)) as
-parseArgs e ("key":as)   = chompOp e Keys.key as
-parseArgs _ []           = []
-parseArgs _ _            = [err "wat."]
-
-chompOp e o as           = op : parseArgs e remnant
-  where (op,remnant) = o as
+loadEnv  =
+  do
+    rs <- sequence . fmap loadRequirement . mconcat . fmap reqs . M.elems $ commands
+    return . M.fromList $ rs

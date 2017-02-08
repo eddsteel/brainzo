@@ -1,9 +1,9 @@
 module Main where
 
-import qualified Brainzo
+import Brainzo
 import Turtle (sh, arguments)
 
 main :: IO ()
 main = sh $ do
-  e <- Brainzo.loadEnv
-  arguments >>= Brainzo.dispatch e
+  brainzo <- birth
+  arguments >>= getToWork brainzo
