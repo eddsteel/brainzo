@@ -140,7 +140,8 @@ parseStations (Brainzo env _) =
         tupleOrDrop _      agg = agg
         config = fromJust . Map.lookup "radio.stations" $ env
 
-command = Cmd "radio" args radio ["radio.stations"]
+command :: Command
+command  = Cmd "radio" args radio ["radio.stations"]
   where args = [ "list", "play <station>"
                , "on", "off"
                , "seek", "kees"

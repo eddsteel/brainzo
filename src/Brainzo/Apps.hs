@@ -14,7 +14,7 @@ mplayerOptions :: [Text]
 mplayerOptions = ["-prefer-ipv4", "-ao", "alsa"]
 
 mplayer :: Text -> Shell Text
-mplayer url =inproc "mplayer" (url:mplayerOptions) empty
+mplayer url = inproc "mplayer" (url:mplayerOptions) empty
 
 simulateKey :: Text -> Shell ()
 simulateKey k = do
