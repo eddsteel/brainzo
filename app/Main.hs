@@ -1,9 +1,11 @@
 module Main where
 
 import Brainzo
-import Turtle (sh, arguments)
+import Turtle (sh, arguments, err)
 
 main :: IO ()
 main = sh $ do
   brainzo <- birth
-  arguments >>= getToWork brainzo
+  a <- arguments
+  if null a then err brainzoUsage
+  else getToWork brainzo a
