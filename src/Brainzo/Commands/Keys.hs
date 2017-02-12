@@ -1,9 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Brainzo.Commands.Keys(command) where
 
-import Brainzo.Apps(simulateKey)
+import Brainzo.Apps(simulateKey, notify)
 import Brainzo.Data
 import Data.Text(Text)
+import qualified Data.Text as T
 import Data.List.NonEmpty(NonEmpty((:|)))
 import Data.Map.Strict(Map, fromList, findWithDefault)
 
@@ -20,8 +21,10 @@ aliases = fromList [ ("louder", "XF86AudioRaiseVolume")
                    , ("sleep", "XF86Sleep")]
 
 key :: WorkStep
-key _ (k:|rest) = (simulateKey keySym, rest)
-  where keySym = findWithDefault k k aliases
+key _ (k:|rest) = (notify msg >> simulateKey keySym, rest)
+  where
+    msg = T.concat ["Keypress ", k]
+    keySym = findWithDefault k k aliases
 
 command :: Command
 command = Cmd "key" ["<key name or alias>"] key []

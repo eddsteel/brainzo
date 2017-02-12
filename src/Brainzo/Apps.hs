@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Brainzo.Apps(browser,mplayer,simulateKey) where
+module Brainzo.Apps(browser,mplayer,simulateKey,notify) where
 
 import Data.Maybe(fromMaybe)
 import Turtle
@@ -25,3 +25,8 @@ simulateKey k = do
          Nothing -> export "DISPLAY" dsp
          _ -> return ()
   inproc "xdotool" ("key":k:[]) empty >> return ()
+
+-- Run notify-send and pass through the text
+-- TODO: use dbus direct
+notify :: Text -> Shell Text
+notify t = inproc "notify-send" [t] empty >> return t
