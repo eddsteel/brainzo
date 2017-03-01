@@ -1,13 +1,14 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Brainzo.Commands.Radio(command) where
 
-import Brainzo.Apps(mplayer, notify)
+import Brainzo.Apps(mplayer)
 import Brainzo.DB.BrainzoDB(radioDB)
 import Brainzo.DB.RadioDB
 import Brainzo.Data
 import Brainzo.Data.NowPlaying(NowPlaying, fromStationTrack, toStationTrack, station)
 import Brainzo.File(brainzoFile)
 import qualified Brainzo.Data.Storage as DB
+import Brainzo.Notify(notifyPipe)
 import Data.List.NonEmpty(NonEmpty((:|)))
 import Data.Map.Strict(Map, toList)
 import Data.Maybe(fromMaybe, isJust, fromJust)
@@ -85,7 +86,7 @@ play db key url = cat [off
                       -- play radio, piping NP to store. Start with empty string
                       -- so that we get an entry for stations that don't publish
                       -- now playing info.
-                      , player url >>= store . fromStationTrack key >>= notify >>= echo]
+                      , player url >>= store . fromStationTrack key >>= notifyPipe icon >>= echo]
   where store  :: NowPlaying -> Shell Text
         store n = liftIO (DB.store n db)
 
@@ -138,6 +139,9 @@ parseStations (Brainzo env _) =
   where tupleOrDrop [a, b] agg = (a, b):agg
         tupleOrDrop _      agg = agg
         config = fromJust . Map.lookup "radio.stations" $ env
+
+icon :: Text
+icon =  "media-playback-start"
 
 command :: Command
 command  = Cmd "radio" args radio ["radio.stations"]

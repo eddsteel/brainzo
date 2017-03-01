@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Brainzo.Apps(browser,mplayer,simulateKey,notify) where
+module Brainzo.Apps(browser,mplayer,simulateKey) where
 
-import Data.Maybe(fromMaybe)
+import Data.Maybe(fromMaybe, isNothing)
 import Turtle
 
 browser    :: Text -> Shell ()
@@ -21,12 +21,5 @@ simulateKey k = do
   -- quick soln to using this from ssh (i.e. remote control)
   disp <- need "DISPLAY"
   let dsp = fromMaybe ":0" disp
-  _ <- case disp of
-         Nothing -> export "DISPLAY" dsp
-         _ -> return ()
+  _ <- when (isNothing disp) (export "DISPLAY" dsp)
   inproc "xdotool" ("key":k:[]) empty >> return ()
-
--- Run notify-send and pass through the text
--- TODO: use dbus direct
-notify :: Text -> Shell Text
-notify t = inproc "notify-send" [t] empty >> return t

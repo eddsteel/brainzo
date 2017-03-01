@@ -16,7 +16,7 @@ cabal-version:       >=1.10
 library
   hs-source-dirs:      src
   exposed-modules:     Brainzo
-                     , Brainzo.Apps
+  other-modules:       Brainzo.Apps
                      , Brainzo.Commands
                      , Brainzo.Commands.Radio
                      , Brainzo.Commands.GoogleMaps
@@ -27,11 +27,14 @@ library
                      , Brainzo.DB.BrainzoDB
                      , Brainzo.DB.RadioDB
                      , Brainzo.File
-  build-depends:       base >= 4.7 && < 5
+                     , Brainzo.Notify
                      , Brainzo.Util
+  build-depends:       base
                      , MissingH
                      , containers
+                     , dbus
                      , directory
+                     , fdo-notify
                      , foldl
                      , process
                      , safe

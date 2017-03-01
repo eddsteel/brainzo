@@ -1,5 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Brainzo where
+module Brainzo
+       ( module Brainzo
+       , module Brainzo.Data
+       ) where
 
 import Prelude hiding (FilePath, concat)
 import Brainzo.Data
