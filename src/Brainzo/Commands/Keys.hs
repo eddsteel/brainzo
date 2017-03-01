@@ -21,7 +21,7 @@ aliases = fromList [ ("louder", "XF86AudioRaiseVolume")
                    , ("play", "space")    -- more reliable than XF86*
                    , ("rwd", "ctrl+Left") -- and here, too
                    , ("fwd", "ctrl+Right")--
-                   , ("close", "super+c")
+                   , ("close", "super+w")
                    , ("sleep", "XF86Sleep")]
 
 key :: WorkStep
