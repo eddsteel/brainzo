@@ -28,6 +28,7 @@ library
                      , Brainzo.DB.RadioDB
                      , Brainzo.File
   build-depends:       base >= 4.7 && < 5
+                     , Brainzo.Util
                      , MissingH
                      , containers
                      , directory

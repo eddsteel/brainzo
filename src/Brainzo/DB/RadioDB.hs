@@ -6,6 +6,7 @@ module Brainzo.DB.RadioDB
        , main
        , dbFile) where
 
+import Brainzo.Util
 import Brainzo.File(expandHomeIO)
 import Brainzo.Data.NowPlaying
 import Brainzo.Data.Storage
@@ -21,7 +22,7 @@ newDB  = do
   path <- expandHomeIO ".brainzo/radio.db"
   let db = (DB path)
   -- we'll assume if the file exists there's a DB in it. No worries bruh.
-  exists <- doesFileExist $ unpack path
+  exists <- doesFileExist \./ path
   if exists
     then return db
     else initDB db >> return db
