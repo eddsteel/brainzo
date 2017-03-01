@@ -56,6 +56,19 @@ executable b
                      , text
   default-language:    Haskell2010
 
+executable brainzo-api
+  hs-source-dirs:      web
+  main-is:             Main.hs
+  ghc-options:         -Wall -threaded -rtsopts -with-rtsopts=-N
+  build-depends:       base
+                     , brainzo
+                     , turtle
+                     , text
+                     , blaze-html
+                     , happstack-lite
+                     , happstack-server
+  default-language:    Haskell2010
+
 test-suite brainzo-test
   type:                exitcode-stdio-1.0
   hs-source-dirs:      test
