@@ -4,16 +4,17 @@ emulator:
 	/opt/android-sdk/tools/emulator @reactivenexus5
 
 run:
+	cd mobile && \
 	react-native run-android
 
-release: brainzo.apk
+release: mobile/brainzo.apk
 
-brainzo.apk:
-	cd android && \
+mobile/brainzo.apk:
+	cd mobile/android && \
 	./gradlew assembleRelease && \
 	cd app/build/outputs/apk && \
 	jarsigner -keystore ~/.secrets/android.keystore app-release-unsigned.apk edd && \
 	mv app-release-unsigned.apk ../../../../../brainzo.apk
 
-install: brainzo.apk
-	adb install -r brainzo.apk
+install: mobile/brainzo.apk
+	adb install -r mobile/brainzo.apk
