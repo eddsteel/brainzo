@@ -9,13 +9,14 @@ import Brainzo.Data.NowPlaying(NowPlaying, fromStationTrack, toStationTrack, sta
 import Brainzo.File(brainzoFile)
 import qualified Brainzo.Data.Storage as DB
 import Brainzo.Notify(notifyPipe)
+import Control.Applicative((<|>))
 import Data.List.NonEmpty(NonEmpty((:|)))
 import Data.Map.Strict(Map, toList)
 import Data.Maybe(fromMaybe, isJust, fromJust)
 import Prelude hiding (FilePath)
 import Turtle((<>), FilePath, Pattern, Shell, Text)
-import Turtle(between, cat, chars, choice, echo, empty, endless, err, grep, has)
-import Turtle(inproc, input, liftIO, output, prefix, rm, sed, stdout, testfile)
+import Turtle(between, chars, choice, empty, err, grep, has)
+import Turtle(inproc, input, liftIO, output, prefix, rm, sed, testfile)
 import qualified Data.Map.Strict as Map
 import qualified Data.Text as T
 
@@ -33,7 +34,7 @@ orNoop = fromMaybe empty
 
 radio :: WorkStep
 radio b args @ (a:|as)
-  | noConfig  = (err "radio needs some stations.", a:as)
+  | noConfig  = (err "radio needs some stations." >> return "", a:as)
   | otherwise = case args of
       ("list":|r)   -> ((list . parseStations) b, r)
       ("play":|k:r) -> doRadio b r (playByKey k)
@@ -45,9 +46,9 @@ radio b args @ (a:|as)
       ("off":|r)    -> (off, r)
       (op:|_)       -> bail $ T.concat ["radio doesn't understand ", op, "."]
   where noConfig = isJust . Map.lookup "radio" . environment $ b
-        bail t = (err t, a:as)
+        bail t = (err t >> return "", a:as)
 
-doRadio :: Brainzo -> [Text] -> (Stations -> RadioDB -> Shell ()) -> (Shell (), [Text])
+doRadio :: Brainzo -> [Text] -> (Stations -> RadioDB -> Shell Text) -> (Shell Text, [Text])
 doRadio b rest fn =
   let
     db = database b
@@ -56,37 +57,37 @@ doRadio b rest fn =
   in
     (action, rest)
 
-list :: Stations -> Shell ()
-list = echo . T.unlines . Map.keys
+list :: Stations -> Shell Text
+list = return . T.unlines . Map.keys
 
-np :: Stations -> RadioDB -> Shell ()
-np _ db         = withNP nowPlaying (echo "off")
-  where nowPlaying :: Text -> Shell ()
-        nowPlaying _ = liftIO $ fmap toStationTrack (DB.retrieve db) >>= echo
+np :: Stations -> RadioDB -> Shell Text
+np _ db         = withNP nowPlaying (return "off")
+  where nowPlaying :: Text -> Shell Text
+        nowPlaying _ = liftIO $ fmap toStationTrack (DB.retrieve db)
 
-nps :: Stations -> RadioDB -> Shell ()
-nps _ db = liftIO $ station <$> DB.retrieve db >>= echo
+nps :: Stations -> RadioDB -> Shell Text
+nps _ db = liftIO $ station <$> DB.retrieve db
 
-seek :: Stations -> RadioDB -> Shell ()
+seek :: Stations -> RadioDB -> Shell Text
 seek c db = withNP (playNext Fwd c db) (playFirst c db)
 
-kees :: Stations -> RadioDB -> Shell ()
+kees :: Stations -> RadioDB -> Shell Text
 kees c db = withNP (playNext Bwd c db) (playFirst c db)
 
-on :: Stations -> RadioDB -> Shell ()
+on :: Stations -> RadioDB -> Shell Text
 on c db = withNP (playCurrent c db) (playFirst c db)
 
-off :: Shell ()
-off = cat [inproc "killall" ["-q", "mplayer"] empty >> endless
-                      , withNP (\_ -> npfile >>= rm ) empty ]
+off :: Shell Text
+off = (inproc "killall" ["-q", "mplayer"] empty)
+      <|> (withNP (\_ -> npfile >>= rm >> return "" ) empty)
 
-play :: RadioDB -> Text -> Text -> Shell ()
-play db key url = cat [off
-                      , npfile >>= \file -> output file (return key)
+play :: RadioDB -> Text -> Text -> Shell Text
+play db key url = off
+                  <|> (npfile >>= \file -> output file (return key) >> return "")
                       -- play radio, piping NP to store. Start with empty string
                       -- so that we get an entry for stations that don't publish
                       -- now playing info.
-                      , player url >>= store . fromStationTrack key >>= notifyPipe icon >>= echo]
+                  <|> (player url >>= store . fromStationTrack key >>= notifyPipe icon)
   where store  :: NowPlaying -> Shell Text
         store n = liftIO (DB.store n db)
 
@@ -106,10 +107,10 @@ player url =
   let filtered = grep (prefix icyPrefix) (mplayer url)
   in sed icyFormat filtered
 
-playByKey :: Text -> Stations -> RadioDB -> Shell ()
+playByKey :: Text -> Stations -> RadioDB -> Shell Text
 playByKey s ss db = orNoop (play db s <$> Map.lookup s ss)
 
-playNext :: Direction -> Stations -> RadioDB -> Text -> Shell ()
+playNext :: Direction -> Stations -> RadioDB -> Text -> Shell Text
 playNext d c db key  = uncurry (play db) next
   where
     streams Fwd = Prelude.concat . repeat . Map.toList
@@ -117,14 +118,14 @@ playNext d c db key  = uncurry (play db) next
     second = head . tail
     next = second (dropWhile ((/= key) . fst) (streams d c))
 
-playFirst :: Stations -> RadioDB -> Shell ()
+playFirst :: Stations -> RadioDB -> Shell Text
 playFirst s db  = (uncurry (play db) . (head . Map.toList)) s
 
-playCurrent :: Stations -> RadioDB -> Text -> Shell ()
+playCurrent :: Stations -> RadioDB -> Text -> Shell Text
 playCurrent s db k = uncurry (play db) current
   where current = head $ filter ((== k) . fst) (toList s)
 
-withNP :: (Text -> Shell ()) -> Shell () -> Shell ()
+withNP :: (Text -> Shell Text) -> Shell Text -> Shell Text
 withNP f g =
   do
     nf <- npfile

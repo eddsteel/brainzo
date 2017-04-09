@@ -26,7 +26,7 @@ searchURL  = (T.append "https://www.google.com/maps/search/") . (T.replace " " "
 -- scripts.  however since greedy is normally what's wanted it seems
 -- OK for now.
 --
-greedyUnlessQuoted                          :: ([Text] -> Shell ()) -> NonEmpty Text -> (Shell (), [Text])
+greedyUnlessQuoted                          :: ([Text] -> Shell a) -> NonEmpty Text -> (Shell a, [Text])
 greedyUnlessQuoted f (q:|rest)
    | T.head q == T.last q && T.head q == '"' = (f (T.words (T.init (T.tail q))), rest)
    | otherwise                               = (f (q:rest), [])

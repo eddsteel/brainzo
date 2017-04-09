@@ -67,6 +67,7 @@ executable brainzo-api
                      , blaze-html
                      , happstack-lite
                      , happstack-server
+                     , foldl
   default-language:    Haskell2010
 
 test-suite brainzo-test

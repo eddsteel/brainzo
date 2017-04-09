@@ -19,13 +19,13 @@ birth = do
   db <- liftIO DB.new
   return $ Brainzo e db
 
-getToWork         :: Brainzo -> [Text] -> Shell ()
+getToWork         :: Brainzo -> [Text] -> Shell Text
 getToWork b (a:as) = goDo (M.lookup a commands) b as
-getToWork _ []     = return ()
+getToWork _ []     = return ""
 
-goDo :: Maybe Command -> Brainzo -> [Text] -> Shell ()
-goDo Nothing _ _       = err brainzoUsage
-goDo (Just c) _ []     = err (usage c)
+goDo :: Maybe Command -> Brainzo -> [Text] -> Shell Text
+goDo Nothing _ _       = err brainzoUsage >> return ""
+goDo (Just c) _ []     = err (usage c) >> return ""
 goDo (Just c) b (t:ts) = chompOp (t:|ts) (entryPoint c)
   where
     chompOp (a:|as) step =

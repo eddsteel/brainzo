@@ -2,20 +2,17 @@
 module Main where
 
 import Brainzo
-import Control.Applicative((<$>), optional)
-import Control.Monad (forM_)
-import Data.Maybe (fromMaybe)
+import Control.Applicative((<$>))
 import Data.Text (Text)
-import qualified Data.Text.IO as TIO
-import Data.Text.Lazy (unpack)
 import Happstack.Lite
 import Happstack.Server (uriRest)
-import Text.Blaze.Html5 (Html, (!), a, form, input, p, toHtml, label)
-import Text.Blaze.Html5.Attributes (action, enctype, href, name, size, type_, value)
+import Text.Blaze.Html5 ((!), a, toHtml)
+import Text.Blaze.Html5.Attributes (href)
 import qualified Data.Text as T
 import qualified Text.Blaze.Html5 as H
 import qualified Text.Blaze.Html5.Attributes as A
-import Turtle(sh, echo, liftIO)
+import qualified Control.Foldl as L
+import Turtle(sh, liftIO, fold, Shell)
 
 main :: IO ()
 main = sh $ do
@@ -45,8 +42,11 @@ template title body =
 bzHandler :: Brainzo -> Text -> ServerPart Response
 bzHandler b rest =
   let ts = tail $ "/" `T.splitOn` rest
+      out :: Shell Text
+      out = getToWork b ts
   in
-    sh (getToWork b ts) >> ok emptyBody
+      fold out f >>= ok . toResponse
+  where f = T.concat <$> L.list
 
 usage :: ServerPart Response
 usage = ok . template "Bleep Bloop" $ H.pre . H.code . toHtml $ brainzoUsage
