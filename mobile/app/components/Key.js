@@ -17,13 +17,11 @@ export default class Key extends React.Component {
     }
 
     render() {
-        var sym = this.props.sym;
-        var chan = this.props.chan;
         return (
             <View style={{margin: 5}}>
               <Icon.Button style={{alignItems: 'center'}}
-                size={18}
-                onPress={() => this.sendKey(chan, sym)}
+                size={16}
+                onPress={() => this.sendKey(this.props.chan, this.props.sym)}
                 name={this.props.icon}/>
             </View>
         );
