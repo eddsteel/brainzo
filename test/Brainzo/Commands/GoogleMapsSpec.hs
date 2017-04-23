@@ -1,8 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Brainzo.GoogleMapsSpec where
+module Brainzo.Commands.GoogleMapsSpec where
 
 import Test.Hspec
-import Brainzo.GoogleMaps(searchURL)
+import Brainzo.Commands.GoogleMaps(searchURL)
 
 main :: IO ()
 main = hspec spec

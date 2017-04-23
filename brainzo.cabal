@@ -16,38 +16,39 @@ cabal-version:       >=1.10
 library
   hs-source-dirs:      src
   exposed-modules:     Brainzo
-  other-modules:       Brainzo.Apps
-                     , Brainzo.Commands
                      , Brainzo.Commands.Radio
                      , Brainzo.Commands.GoogleMaps
+                     , Brainzo.Commands.Transmission
+  other-modules:       Brainzo.Apps
+                     , Brainzo.Commands
                      , Brainzo.Commands.Keys
+                     , Brainzo.DB.BrainzoDB
+                     , Brainzo.DB.RadioDB
                      , Brainzo.Data
                      , Brainzo.Data.NowPlaying
                      , Brainzo.Data.Storage
-                     , Brainzo.DB.BrainzoDB
-                     , Brainzo.DB.RadioDB
                      , Brainzo.File
                      , Brainzo.Notify
-                     , Brainzo.Transmission
                      , Brainzo.Util
   build-depends:       base
+                     , ConfigFile
                      , MissingH
                      , containers
                      , dbus
                      , directory
                      , fdo-notify
                      , foldl
+                     , fraction
+                     , mtl
                      , process
+                     , regex-applicative-text
                      , safe
                      , sqlite-simple
                      , strict
                      , system-filepath
                      , text
                      , time
-                     , ConfigFile
-                     , mtl
-                     , fraction
-                     , regex-applicative-text
+                     , turtle
   default-language:    Haskell2010
 
 executable b
@@ -65,25 +66,27 @@ executable brainzo-api
   main-is:             Main.hs
   ghc-options:         -Wall -threaded -rtsopts -with-rtsopts=-N
   build-depends:       base
-                     , brainzo
-                     , turtle
-                     , text
                      , blaze-html
+                     , brainzo
+                     , foldl
                      , happstack-lite
                      , happstack-server
-                     , foldl
+                     , text
+                     , turtle
   default-language:    Haskell2010
 
 test-suite brainzo-test
   type:                exitcode-stdio-1.0
   hs-source-dirs:      test
   main-is:             Spec.hs
+  other-modules:       Brainzo.Commands.GoogleMapsSpec
+                     , Brainzo.Commands.RadioSpec
   build-depends:       base
-                     , hspec
                      , brainzo
+                     , hspec
                      , text
-  ghc-options:         -O2 -Wall -threaded -rtsopts -with-rtsopts=-N
                      , turtle
+  ghc-options:         -O2 -Wall -threaded -rtsopts -with-rtsopts=-N
   default-language:    Haskell2010
 
 source-repository head

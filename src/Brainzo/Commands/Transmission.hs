@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings, FlexibleContexts #-}
-module Brainzo.Transmission(transmission) where
+module Brainzo.Commands.Transmission(transmission) where
 
 import Control.Applicative
 import Control.Monad.Except
@@ -24,10 +24,10 @@ instance Eq Fraction where
 type MagnetURI = Text
 type Config = Text
 
-transmission                                :: Maybe Config -> [Text] -> (Shell (), [Text])
-transmission (Just cp) ("add":(magnet:as)) = (withConfig cp (add magnet), as)
-transmission (Just cp) ("list":rest)       = (withConfig cp list, rest)
-transmission Nothing all                   = (err "Need some config in ~/.transmission", all)
+transmission                            :: Maybe Config -> [Text] -> (Shell (), [Text])
+transmission (Just cp) ("add":magnet:as) = (withConfig cp (add magnet), as)
+transmission (Just cp) ("list":rest)     = (withConfig cp list, rest)
+transmission Nothing all                 = (err "Need some config in ~/.brainzo./transmission", all)
 
 fakeproc :: Text -> [Text] -> Shell Text -> Shell ()
 fakeproc cmd args stdout = do

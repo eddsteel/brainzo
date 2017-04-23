@@ -6,15 +6,12 @@ module Brainzo
 
 import Brainzo.Commands
 import Brainzo.Data
-import Brainzo.GoogleMaps(googleMap)
 import Control.Exception(Exception,catch,SomeException,bracket)
 import Data.List.NonEmpty(NonEmpty((:|)))
 import Data.Text(Text)
 import Prelude hiding (FilePath, concat)
 import System.Process(runCommand, waitForProcess)
 import qualified Brainzo.DB.BrainzoDB as DB
-import qualified Brainzo.Radio as Radio
-import qualified Brainzo.Transmission as Transmission
 import qualified Data.List.Utils as List
 import qualified Data.Map as M
 import qualified Data.Text as T

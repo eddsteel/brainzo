@@ -1,8 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Brainzo.RadioSpec where
+module Brainzo.Commands.RadioSpec where
 
 import Test.Hspec
-import Brainzo.Radio(icyFormat)
+import Brainzo.Commands.Radio(icyFormat)
 import Turtle
 import qualified Data.Text as Text
 

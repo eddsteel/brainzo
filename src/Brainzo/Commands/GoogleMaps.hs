@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Brainzo.Commands.GoogleMaps(command) where
+module Brainzo.Commands.GoogleMaps(command,searchURL) where
 
 import Brainzo.Apps(browser)
 import Brainzo.Data

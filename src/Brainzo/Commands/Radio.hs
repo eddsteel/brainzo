@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Brainzo.Commands.Radio(command) where
+module Brainzo.Commands.Radio(command,icyFormat) where
 
 import Brainzo.Apps(mplayer)
 import Brainzo.DB.BrainzoDB(radioDB)
