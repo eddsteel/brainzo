@@ -16,6 +16,7 @@ cabal-version:       >=1.10
 library
   hs-source-dirs:      src
   exposed-modules:     Brainzo
+                     , Brainzo.Commands.Audio
                      , Brainzo.Commands.Radio
                      , Brainzo.Commands.GoogleMaps
                      , Brainzo.Commands.Transmission
@@ -49,6 +50,7 @@ library
                      , text
                      , time
                      , turtle
+                     , consul-haskell
   default-language:    Haskell2010
 
 executable b
@@ -70,7 +72,6 @@ executable brainzo-api
                      , brainzo
                      , foldl
                      , happstack-lite
-                     , happstack-server
                      , text
                      , turtle
   default-language:    Haskell2010

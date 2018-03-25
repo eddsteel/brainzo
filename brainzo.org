@@ -1,8 +1,13 @@
+* Now Playing
+  read from consul and notify, add a watch for this. For now use
+  #+BEGIN_SRC
+  consul watch -type=key -key=now-playing ~/src/brainzo/now-playing.sh
+  #+END_SRC
+  write radio to consul too
+  add now playing to mobile app
 * General
 * Radio
 ** Fix after turtle move
-* Google Music
-** Search (all remaining terms)
 * Sound control
 ** TODO Move the xmonad stuff to brainzo?
 * System stuff
