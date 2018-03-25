@@ -3,9 +3,11 @@
 module Brainzo.Commands where
 
 import Brainzo.Data
+import qualified Brainzo.Commands.Audio as A
 import qualified Brainzo.Commands.Radio as R
 import qualified Brainzo.Commands.GoogleMaps as GM
 import qualified Brainzo.Commands.Keys as K
+import qualified Brainzo.Commands.Transmission as BT
 import Data.List(intersperse)
 import qualified Data.Text as T
 import Data.Map.Strict(Map, fromList)
@@ -23,7 +25,15 @@ keys = K.command
 googleMaps :: Command
 googleMaps = GM.command
 
+transmission :: Command
+transmission = BT.command
+
+audio :: Command
+audio = A.command
+
 commands :: Map Text Command
-commands = fromList [ ("radio", radio)
+commands = fromList [ ("audio", audio)
+                    , ("bt",    transmission)
+                    , ("key",   keys)
                     , ("map",   googleMaps)
-                    , ("key",   keys)]
+                    , ("radio", radio)]

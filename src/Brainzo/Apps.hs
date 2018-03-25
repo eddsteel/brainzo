@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Brainzo.Apps(browser,mplayer,simulateKey) where
+module Brainzo.Apps(browser,mplayer,simulateKey,pactl,pamixer) where
 
 import Data.Maybe(fromMaybe, isNothing)
 import Turtle
@@ -13,6 +13,12 @@ mplayerOptions = ["-prefer-ipv4", "-ao", "alsa"]
 
 mplayer :: Text -> Shell Text
 mplayer url = inproc "mplayer" (url:mplayerOptions) empty
+
+pactl :: [Text] -> Shell Text
+pactl args = inproc "pactl" args empty
+
+pamixer :: Shell Text
+pamixer = inproc "pavucontrol" empty empty
 
 simulateKey :: Text -> Shell Text
 simulateKey k = do

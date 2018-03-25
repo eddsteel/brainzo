@@ -24,8 +24,9 @@ birth = do
   return $ Brainzo e db
 
 getToWork         :: Brainzo -> [Text] -> Shell Text
-getToWork b (a:as) = goDo (M.lookup a commands) b as
-getToWork _ []     = return ""
+getToWork _ ("bleep":_) = return "bloop!"
+getToWork b (a:as)      = goDo (M.lookup a commands) b as
+getToWork _ []          = return ""
 
 goDo :: Maybe Command -> Brainzo -> [Text] -> Shell Text
 goDo Nothing _ _       = err brainzoUsage >> return ""
