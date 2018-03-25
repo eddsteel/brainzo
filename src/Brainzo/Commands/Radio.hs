@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Brainzo.Commands.Radio(command,icyFormat) where
+module Brainzo.Commands.Radio(command,icyFormat,list,seek,kees,play,on,off,np,nps) where
 
 import Brainzo.Apps(mplayer)
 import Brainzo.DB.BrainzoDB(radioDB)
@@ -36,58 +36,64 @@ radio :: WorkStep
 radio b args @ (a:|as)
   | noConfig  = (err "radio needs some stations." >> return "", a:as)
   | otherwise = case args of
-      ("list":|r)   -> ((list . parseStations) b, r)
-      ("play":|k:r) -> doRadio b r (playByKey k)
-      ("seek":|r)   -> doRadio b r seek
-      ("kees":|r)   -> doRadio b r kees
-      ("on":|r)     -> doRadio b r on
-      ("np":|r)     -> doRadio b r np
-      ("nps":|r)    -> doRadio b r nps
+      ("list":|r)   -> (list b, r)
+      ("play":|k:r) -> (play k b, r)
+      ("seek":|r)   -> (seek b, r)
+      ("kees":|r)   -> (kees b, r)
+      ("on":|r)     -> (on b, r)
       ("off":|r)    -> (off, r)
+      ("np":|r)     -> (np b, r)
+      ("nps":|r)    -> (nps b, r)
       (op:|_)       -> bail $ T.concat ["radio doesn't understand ", op, "."]
   where noConfig = isJust . Map.lookup "radio" . environment $ b
         bail t = (err t >> return "", a:as)
 
-doRadio :: Brainzo -> [Text] -> (Stations -> RadioDB -> Shell Text) -> (Shell Text, [Text])
-doRadio b rest fn =
-  let
-    db = database b
-    config = parseStations b
-    action = fn config . radioDB $ db
-  in
-    (action, rest)
 
-list :: Stations -> Shell Text
-list = return . T.unlines . Map.keys
+list :: Brainzo -> Shell Text
+list  = return . T.unlines . Map.keys . parseStations
 
-np :: Stations -> RadioDB -> Shell Text
-np _ db         = withNP nowPlaying (return "off")
-  where nowPlaying :: Text -> Shell Text
-        nowPlaying _ = liftIO $ fmap toStationTrack (DB.retrieve db)
+seek :: Brainzo -> Shell Text
+seek  = withStationsAndDB $ \ss db -> withNP (playNext Fwd ss db) (playFirst ss db)
 
-nps :: Stations -> RadioDB -> Shell Text
-nps _ db = liftIO $ station <$> DB.retrieve db
+kees :: Brainzo -> Shell Text
+kees  = withStationsAndDB $ \ss db -> withNP (playNext Bwd ss db) (playFirst ss db)
 
-seek :: Stations -> RadioDB -> Shell Text
-seek c db = withNP (playNext Fwd c db) (playFirst c db)
+play  :: Text -> Brainzo -> Shell Text
+play k = withStationsAndDB $ \ss db -> orNoop (playNamed db k <$> Map.lookup k ss)
 
-kees :: Stations -> RadioDB -> Shell Text
-kees c db = withNP (playNext Bwd c db) (playFirst c db)
-
-on :: Stations -> RadioDB -> Shell Text
-on c db = withNP (playCurrent c db) (playFirst c db)
+on :: Brainzo -> Shell Text
+on  = withStationsAndDB $ \ss db -> withNP (playCurrent ss db) (playFirst ss db)
 
 off :: Shell Text
 off = (inproc "killall" ["-q", "mplayer"] empty)
       <|> (withNP (\_ -> npfile >>= rm >> return "" ) empty)
 
-play :: RadioDB -> Text -> Text -> Shell Text
-play db key url = off
-                  <|> (npfile >>= \file -> output file (return key) >> return "")
-                      -- play radio, piping NP to store. Start with empty string
-                      -- so that we get an entry for stations that don't publish
-                      -- now playing info.
-                  <|> (player url >>= store . fromStationTrack key >>= notifyPipe icon)
+np :: Brainzo -> Shell Text
+np  = withStationsAndDB $ \_ db -> withNP (nowPlaying db) (return "off") >>= ntfy
+  where nowPlaying :: RadioDB -> Text -> Shell Text
+        nowPlaying db _ = (liftIO $ fmap toStationTrack (DB.retrieve db))
+        ntfy = notifyPipe icon
+
+nps :: Brainzo -> Shell Text
+nps  = withStationsAndDB $ \_ db -> liftIO $ station <$> DB.retrieve db
+
+-- helpers
+
+withStationsAndDB :: (Stations -> RadioDB -> Shell Text) -> Brainzo -> Shell Text
+withStationsAndDB fn b =
+  let
+    db = radioDB $ database b
+    config = parseStations b
+  in
+   fn config db
+
+playNamed :: RadioDB -> Text -> Text -> Shell Text
+playNamed db key url = off
+  <|> (npfile >>= \file -> output file (return key) >> return "")
+  -- play radio, piping NP to store. Start with empty string
+  -- so that we get an entry for stations that don't publish
+  -- now playing info.
+  <|> (player url >>= store . fromStationTrack key >>= notifyPipe icon)
   where store  :: NowPlaying -> Shell Text
         store n = liftIO (DB.store n db)
 
@@ -108,10 +114,10 @@ player url =
   in sed icyFormat filtered
 
 playByKey :: Text -> Stations -> RadioDB -> Shell Text
-playByKey s ss db = orNoop (play db s <$> Map.lookup s ss)
+playByKey s ss db = orNoop (playNamed db s <$> Map.lookup s ss)
 
 playNext :: Direction -> Stations -> RadioDB -> Text -> Shell Text
-playNext d c db key  = uncurry (play db) next
+playNext d c db key  = uncurry (playNamed db) next
   where
     streams Fwd = Prelude.concat . repeat . Map.toList
     streams Bwd = Prelude.concat . repeat . reverse . Map.toList
@@ -119,10 +125,10 @@ playNext d c db key  = uncurry (play db) next
     next = second (dropWhile ((/= key) . fst) (streams d c))
 
 playFirst :: Stations -> RadioDB -> Shell Text
-playFirst s db  = (uncurry (play db) . (head . Map.toList)) s
+playFirst s db  = (uncurry (playNamed db) . (head . Map.toList)) s
 
 playCurrent :: Stations -> RadioDB -> Text -> Shell Text
-playCurrent s db k = uncurry (play db) current
+playCurrent s db k = uncurry (playNamed db) current
   where current = head $ filter ((== k) . fst) (toList s)
 
 withNP :: (Text -> Shell Text) -> Shell Text -> Shell Text
