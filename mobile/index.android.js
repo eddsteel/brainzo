@@ -14,6 +14,4 @@ import {
 
 import BrainzoRemote from './app/BrainzoRemote';
 
-const brainzoHome = "192.168.1.5";
-
 AppRegistry.registerComponent('brainzo', () => BrainzoRemote);
