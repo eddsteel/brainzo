@@ -1,0 +1,17 @@
+{
+  "service": {
+    "name": "brainzo",
+    "tags": [],
+    "port": 4242,
+    "checks": [
+      {
+        "id": "api",
+        "name": "You OK bud?",
+        "http": "http://localhost:4242/bleep",
+        "method": "GET",
+        "interval": "30s",
+        "timeout": "50ms"
+      }
+    ]
+  }
+}
