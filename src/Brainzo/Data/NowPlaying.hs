@@ -6,28 +6,30 @@ module Brainzo.Data.NowPlaying( NowPlaying
                               , playedOn
                               , fromStationTrack
                               , toStationTrack
-                              , np) where
+                              , nowPlayingRadio) where
 
 import Data.Text(Text)
 import qualified Data.Text as T
 import Data.Time.Clock(UTCTime)
 import Database.SQLite.Simple(FromRow, fromRow, field)
+import Turtle(Line, unsafeTextToLine)
 
-data NowPlaying = NP { npId :: Maybe Integer
-                     , station :: Text
-                     , track :: Text
-                     , playedOn :: Maybe UTCTime } deriving Show
+data NowPlaying = NowPlayingRadio { npId :: Maybe Integer
+                      , station :: Text
+                      , track :: Text
+                      , playedOn :: Maybe UTCTime } deriving Show
 
 instance FromRow NowPlaying where
-  fromRow = NP <$> field <*> field <*> field <*> field
+  fromRow = NowPlayingRadio <$> field <*> field <*> field <*> field
 
-np        :: Maybe Integer ->  Maybe UTCTime -> Text -> Text -> NowPlaying
-np i o s t = NP { npId = i, station = s, track = t, playedOn = o }
+nowPlayingRadio        :: Maybe Integer ->  Maybe UTCTime -> Text -> Text -> NowPlaying
+nowPlayingRadio i o s t = NowPlayingRadio { npId = i, station = s, track = t, playedOn = o }
 
 fromStationTrack :: Text -> Text -> NowPlaying
-fromStationTrack  = np Nothing Nothing
+fromStationTrack  = nowPlayingRadio Nothing Nothing
 
-toStationTrack          :: NowPlaying -> Text
-toStationTrack (NP {..}) = if track == ""
-                           then station
-                           else T.concat [station, " - ", track]
+toStationTrack          :: NowPlaying -> Line
+toStationTrack (NowPlayingRadio {..}) =
+  unsafeTextToLine $ if track == ""
+                     then station
+                     else T.concat [station, " - ", track]

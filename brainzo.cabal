@@ -19,7 +19,6 @@ library
                      , Brainzo.Commands.Audio
                      , Brainzo.Commands.Radio
                      , Brainzo.Commands.GoogleMaps
-                     , Brainzo.Commands.Transmission
   other-modules:       Brainzo.Apps
                      , Brainzo.Commands
                      , Brainzo.Commands.Keys
@@ -72,6 +71,7 @@ executable brainzo-api
                      , brainzo
                      , foldl
                      , happstack-lite
+                     , happstack-server
                      , text
                      , turtle
   default-language:    Haskell2010

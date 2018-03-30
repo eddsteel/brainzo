@@ -8,11 +8,12 @@ import Data.Text(Text)
 import qualified Data.Text as T
 import Data.List.NonEmpty(NonEmpty((:|)))
 import Data.Map.Strict(Map, fromList, findWithDefault)
+import Turtle(Line, unsafeTextToLine)
 
 type KeySym = Text
 
-icon :: Text
-icon = "preferences-desktop-keyboard"
+icon :: Line
+icon = unsafeTextToLine "preferences-desktop-keyboard"
 
 aliases :: Map Text KeySym
 aliases = fromList [ ("louder", "XF86AudioRaiseVolume")
@@ -27,7 +28,7 @@ aliases = fromList [ ("louder", "XF86AudioRaiseVolume")
 key :: WorkStep
 key _ (k:|rest) = (notifyPipe icon msg >> simulateKey keySym, rest)
   where
-    msg = T.concat ["Keypress ", k]
+    msg = unsafeTextToLine $ T.concat ["Keypress ", k]
     keySym = findWithDefault k k aliases
 
 command :: Command

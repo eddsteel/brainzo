@@ -10,7 +10,8 @@ import Turtle
 data Brainzo = Brainzo { environment :: Env, database :: DB }
 type Env = Map Text Text
 type Requirement = (Text, Text) -- Requirement for a module: (<file name>, <file contents>)
-type WorkStep = Brainzo -> NonEmpty Text -> (Shell Text, [Text])
+type Lines = [Line]
+type WorkStep = Brainzo -> NonEmpty Text -> (Shell Lines, [Text])
 data Command = Cmd { commandName :: Text
                    , subCommands :: [Text]
                    , entryPoint :: WorkStep

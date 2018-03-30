@@ -3,7 +3,6 @@ module Brainzo.DB.RadioDB
        ( NowPlaying
        , RadioDB
        , newDB
-       , main
        , dbFile) where
 
 import Brainzo.Util
@@ -58,10 +57,3 @@ instance NPStorage RadioDB where
         unlines [ "insert into radio_now_playing (station, track, playedOn) "
                 , "values (?, ?, datetime('now'));"])) (st, tr)
       return $ concat [st, " - ", tr]
-
-main :: IO ()
-main = do
-  db <- newDB
-  _ <- store (np Nothing Nothing "Hi" "Yo") db
-  _ <- retrieve db
-  return ()

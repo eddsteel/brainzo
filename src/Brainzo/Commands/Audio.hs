@@ -16,26 +16,26 @@ audio _ args @ (a:|as) = case args of
   ("micmute":|r)   -> (micmute, r)
   ("mixer":|r)     -> (mixer, r)
   (op:|_)          -> (bail $ T.concat ["audio doesn't understand ", op, "."], a:as)
-  where bail t = err t >> return ""
-        readOrBail :: Read a => Text -> (a -> Shell Text) -> Shell Text
+  where bail t = err (unsafeTextToLine t) >> return mempty
+        readOrBail :: Read a => Text -> (a -> Shell [Line]) -> Shell [Line]
         readOrBail str fun = case readMaybe . T.unpack $ str of
                                Just i -> fun i
                                Nothing -> bail "invalid number"
 
-louder :: Int -> Shell Text
+louder :: Int -> Shell [Line]
 louder  = adjustChannel Sink Up
 
-quieter :: Int -> Shell Text
+quieter :: Int -> Shell [Line]
 quieter = adjustChannel Sink Down
 
-mute :: Shell Text
+mute :: Shell [Line]
 mute  = muteChannel Sink
 
-micmute :: Shell Text
+micmute :: Shell [Line]
 micmute  = muteChannel Source
 
-mixer :: Shell Text
-mixer  = inproc "pavucontrol" empty empty
+mixer :: Shell [Line]
+mixer  = (:[]) <$> inproc "pavucontrol" empty empty
 
 data Channel = Source | Sink deriving Show
 data Direction = Up | Down deriving Show
@@ -45,7 +45,7 @@ defaultName :: Channel -> Text
 defaultName Source = "@DEFAULT_SOURCE@"
 defaultName Sink = "@DEFAULT_SINK@"
 
-adjustChannel :: Channel -> Direction -> Int -> Shell Text
+adjustChannel :: Channel -> Direction -> Int -> Shell [Line]
 adjustChannel chan dir i =
   let adj Up = "+"
       adj Down = "-"
@@ -53,7 +53,7 @@ adjustChannel chan dir i =
       volCmd Sink = "set-sink-volume"
   in pactl [volCmd chan, defaultName chan, T.concat [adj dir, T.pack (show i), "%"]]
 
-muteChannel  :: Channel -> Shell Text
+muteChannel  :: Channel -> Shell [Line]
 muteChannel c =
   let muteCmd Source = "set-source-mute"
       muteCmd Sink = "set-sink-mute"
