@@ -3,13 +3,14 @@
   #+BEGIN_SRC
   consul watch -type=key -key=now-playing ~/.local/bin/b np get
   #+END_SRC
+  - [X] provide command to read now playing from consul
   - [ ] write radio to consul too
   - [ ] add now playing to mobile app
 * General
-* Radio
-** Fix after turtle move
 * Sound control
-** TODO Move the xmonad stuff to brainzo?
+** DONE Move the xmonad stuff to brainzo
+   CLOSED: [2018-03-31 Sat 20:03]
+   - State "DONE"       from "TODO"       [2018-03-31 Sat 20:03]
 * System stuff
 ** TODO Sleep
 ** TODO lock screen
@@ -22,6 +23,8 @@
 ** DONE use Fraction lib
    CLOSED: [2016-04-30 Sat 15:10]
    - State "DONE"       from "TODO"       [2016-04-30 Sat 15:10]
-** TODO use Turtle's pattern matching
+** DONE use Turtle's pattern matching
+   CLOSED: [2018-03-31 Sat 20:03]
+   - State "DONE"       from "TODO"       [2018-03-31 Sat 20:03]
 * More?
 ** What should I cook (given ingredients and recipes dir)
