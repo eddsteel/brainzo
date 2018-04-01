@@ -5,7 +5,7 @@ import Brainzo.Apps(mplayer)
 import Brainzo.DB.BrainzoDB(radioDB)
 import Brainzo.DB.RadioDB
 import Brainzo.Data
-import Brainzo.Data.NowPlaying(NowPlaying, fromStationTrack, toStationTrack, station)
+import Brainzo.Data.NowPlaying(NowPlaying, fromStationTrack, toLine, station)
 import Brainzo.File(brainzoFile)
 import qualified Brainzo.Data.Storage as DB
 import Brainzo.Notify
@@ -75,7 +75,7 @@ np b = retrieve b >>= notify
   where retrieve :: Brainzo -> Shell [Line]
         retrieve = withStationsAndDB $ \_ db -> withNP (nowPlaying db) (return ["off"])
         nowPlaying :: RadioDB -> Line -> Shell [Line]
-        nowPlaying db _ =  liftIO $ fmap ((:[]) . toStationTrack) (DB.retrieve db)
+        nowPlaying db _ =  liftIO $ fmap ((:[]) . toLine) (DB.retrieve db)
         notify :: Lines -> Shell Lines
         notify = notifyPipe icon . head
 

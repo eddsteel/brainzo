@@ -1,9 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Brainzo.Apps(browser,mplayer,simulateKey,pactl,pamixer) where
+module Brainzo.Apps(browser,mplayer,simulateKey,pactl,pamixer,consulValue) where
 
 import Brainzo.Data(Lines)
+import Data.ByteString(ByteString)
 import Data.Maybe(fromMaybe, isNothing)
 import Turtle
+import qualified Turtle.Bytes as BS
 
 browser    :: Text -> Shell Lines
 browser url = (:[]) <$> inproc "xdg-open" [url] empty
@@ -28,3 +30,6 @@ simulateKey k = do
   let dsp = fromMaybe ":0" disp
   _ <- when (isNothing disp) (export "DISPLAY" dsp)
   (:[]) <$> inproc "xdotool" ("key":k:[]) empty
+
+consulValue :: Text -> Shell ByteString
+consulValue k = BS.inproc "consul" ["kv", "get", k] empty

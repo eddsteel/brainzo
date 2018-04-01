@@ -7,7 +7,7 @@ license:             BSD3
 license-file:        LICENSE
 author:              Edward Steel
 maintainer:          edd@eddsteel.com
-copyright:           2015-2016 Edward Steel
+copyright:           2015-2018 Edward Steel
 category:            Web
 build-type:          Simple
 -- extra-source-files:
@@ -22,6 +22,7 @@ library
   other-modules:       Brainzo.Apps
                      , Brainzo.Commands
                      , Brainzo.Commands.Keys
+                     , Brainzo.Commands.NowPlaying
                      , Brainzo.DB.BrainzoDB
                      , Brainzo.DB.RadioDB
                      , Brainzo.Data
@@ -30,7 +31,9 @@ library
                      , Brainzo.File
                      , Brainzo.Notify
                      , Brainzo.Util
-  build-depends:       base
+  build-depends:       aeson
+                     , base
+                     , bytestring
                      , ConfigFile
                      , MissingH
                      , containers
@@ -49,7 +52,7 @@ library
                      , text
                      , time
                      , turtle
-                     , consul-haskell
+                     , unordered-containers
   default-language:    Haskell2010
 
 executable b

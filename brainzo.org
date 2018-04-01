@@ -1,10 +1,10 @@
 * Now Playing
   read from consul and notify, add a watch for this. For now use
   #+BEGIN_SRC
-  consul watch -type=key -key=now-playing ~/src/brainzo/now-playing.sh
+  consul watch -type=key -key=now-playing ~/.local/bin/b np get
   #+END_SRC
-  write radio to consul too
-  add now playing to mobile app
+  - [ ] write radio to consul too
+  - [ ] add now playing to mobile app
 * General
 * Radio
 ** Fix after turtle move
