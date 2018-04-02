@@ -2,7 +2,6 @@
 module Main where
 
 import Brainzo
-import Control.Applicative((<$>))
 import qualified Data.List.NonEmpty as NEL
 import Data.Text (Text)
 import Happstack.Lite
@@ -13,7 +12,7 @@ import qualified Data.Text as T
 import qualified Text.Blaze.Html5 as H
 import qualified Text.Blaze.Html5.Attributes as A
 import qualified Control.Foldl as L
-import Turtle(sh, liftIO, fold, Shell, lineToText, Line)
+import Turtle(sh, liftIO, fold, lineToText, Line)
 
 main :: IO ()
 main = sh $ do
@@ -43,11 +42,10 @@ template title body =
 bzHandler :: Brainzo -> Text -> ServerPart Response
 bzHandler b rest =
   let ts = tail $ "/" `T.splitOn` rest
-      out :: Shell Text
-      out = linesToText <$> getToWork b ts
+      out = getToWork b ts
+      output = fold out $ L.foldMap linesToText id
   in
-      fold out f >>= ok . toResponse
-  where f = T.concat <$> L.list
+    output >>= ok . toResponse
 
 usage :: ServerPart Response
 usage = ok . template "Bleep Bloop" $ H.pre . H.code . toHtml . linesToText . NEL.toList $ brainzoUsage
