@@ -44,11 +44,13 @@ toLine :: NowPlaying -> Line
 toLine = unsafeTextToLine . text
   where
     text (NowPlayingRadio {..}) = if track == "" then station else station `dash` track
-    text (NowPlayingTrack {..}) = artist `dash` title
+    text (NowPlayingTrack {..}) = artist `dash` title `brackets` album
     text (NowPlayingTelevision {..}) = series `dash` title
-    text (NowPlayingFilm {..}) = undefined
+    text (NowPlayingFilm {..}) = title
     text Off = "off"
     dash a b = T.concat [a, " — ", b]
+    brackets a (Just b) = T.concat [a, " (", b, ")"]
+    brackets a Nothing  = a
 
 instance FromJSON NowPlaying where
   parseJSON (Object o)
