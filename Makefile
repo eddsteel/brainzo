@@ -18,3 +18,6 @@ mobile/brainzo.apk:
 
 install: mobile/brainzo.apk
 	adb install -r mobile/brainzo.apk
+
+log:
+	adb logcat *:S ReactNative:V ReactNativeJS:V
