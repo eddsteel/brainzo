@@ -8,8 +8,8 @@ import { chan } from 'js-csp';
 
 import Brainzo from './util/Brainzo';
 import Receiver from './util/Receiver';
-import CoolText from './components/CoolText';
 import Keyboard from './components/Keyboard';
+import NowPlaying from './components/NowPlaying';
 
 export default class BrainzoRemote extends Component {
     constructor(props) {
@@ -18,6 +18,7 @@ export default class BrainzoRemote extends Component {
         var bz = new Brainzo();
         var recv = new Receiver(ch, (k) => bz.key(k));
         this.state = {
+            'brainzo': bz,
             'keyChan': ch,
             'receiver': recv,
         };
@@ -26,14 +27,7 @@ export default class BrainzoRemote extends Component {
     render() {
         return (
             <View style={styles.container}>
-              <CoolText
-                style={styles.brainzo}
-                titleColors={['#ff00dd', '#00ffdd', '#ddff00']}
-                letters={['B', 'R', 'A', 'I', 'N', 'Z', 'O', '!']} />
-              <Text style={styles.welcome}>
-                Bleep Bloop.
-              </Text>
-
+              <NowPlaying brainzo={this.state.brainzo}/>
               <Keyboard chan={this.state.keyChan} />
             </View>
         );
@@ -52,11 +46,6 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         margin: 10,
         color: '#ff00dd',
-    },
-    brainzo: {
-        fontSize: 30,
-        textAlign: 'center',
-        margin: 10,
     },
 
 });

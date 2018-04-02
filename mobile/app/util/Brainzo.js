@@ -7,4 +7,12 @@ export default class Brainzo {
                 console.error(error);
             });
     }
+
+    nowPlaying() {
+        console.debug("get now playing")
+        return fetch(Brainzo.home + "/np/get")
+            .catch((error) => {
+                console.warn(error);
+            });
+    }
 }

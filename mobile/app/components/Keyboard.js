@@ -39,7 +39,7 @@ export default class Keyboard extends Component {
         }
         var chars = Array.from(str).map(transform);
         chars.map((c) => putAsync(this.props.chan, c));
-        this.state = {text: ''};
+        this.setState({text: ''});
     }
 
     render() {
@@ -48,11 +48,11 @@ export default class Keyboard extends Component {
             <View style={{alignItems: 'center'}}>
               <View style={{flexDirection: 'row'}}>
                 <TextInput
-                  style={{height: 40, flex: 17, margin: 5}}
+                  style={{height: 40, flex: 17, margin: 25, width: '90%'}}
                   placeholder="enter keys"
                   onChangeText={(text) => this.setState({text})}
                   onSubmitEditing={() => this.sendKeys()}
-                  value={this.state.value}/>
+                  value={this.state.text}/>
               </View>
               <View style={styles.keyblockrow}>
                 <View style={styles.keyblock}>
