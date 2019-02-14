@@ -3,11 +3,12 @@
 module Brainzo.Commands where
 
 import Brainzo.Data
-import qualified Brainzo.Commands.Audio as A
-import qualified Brainzo.Commands.Radio as R
-import qualified Brainzo.Commands.GoogleMaps as GM
-import qualified Brainzo.Commands.Keys as K
-import qualified Brainzo.Commands.NowPlaying as NP
+import qualified Brainzo.Commands.Audio as Audio
+import qualified Brainzo.Commands.Radio as Radio
+import qualified Brainzo.Commands.GoogleMaps as Maps
+import qualified Brainzo.Commands.Keys as Keys
+import qualified Brainzo.Commands.Mouse as Mouse
+import qualified Brainzo.Commands.NowPlaying as NowPlaying
 import Data.List(intersperse)
 import qualified Data.Text as T
 import Data.Map.Strict(Map, fromList)
@@ -16,27 +17,10 @@ import Turtle
 usage :: Command -> Line
 usage (Cmd cmd subs _ _) = unsafeTextToLine $ T.snoc (T.concat $ cmd : " [" : (intersperse "|" subs)) ']'
 
-radio :: Command
-radio = R.command
-
-keys :: Command
-keys = K.command
-
-googleMaps :: Command
-googleMaps = GM.command
-
--- transmission :: Command
--- transmission = BT.command
-
-audio :: Command
-audio = A.command
-
-nowPlaying :: Command
-nowPlaying = NP.command
-
 commands :: Map Text Command
-commands = fromList [ ("audio", audio)
-                    , ("key",   keys)
-                    , ("map",   googleMaps)
-                    , ("radio", radio)
-                    , ("np", nowPlaying)]
+commands = fromList [ ("audio", Audio.command)
+                    , ("key",   Keys.command)
+                    , ("map",   Maps.command)
+                    , ("mouse", Mouse.command)
+                    , ("np",    NowPlaying.command)
+                    , ("radio", Radio.command)]

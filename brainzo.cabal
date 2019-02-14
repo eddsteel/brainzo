@@ -22,10 +22,12 @@ library
   other-modules:       Brainzo.Apps
                      , Brainzo.Commands
                      , Brainzo.Commands.Keys
+                     , Brainzo.Commands.Mouse
                      , Brainzo.Commands.NowPlaying
                      , Brainzo.DB.BrainzoDB
                      , Brainzo.DB.RadioDB
                      , Brainzo.Data
+                     , Brainzo.Data.Mouse
                      , Brainzo.Data.NowPlaying
                      , Brainzo.Data.Storage
                      , Brainzo.File

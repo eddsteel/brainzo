@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Brainzo.Apps(browser,mplayer,simulateKey,pactl,pamixer,consulValue) where
+module Brainzo.Apps(browser,mplayer,mouseMove,mouseClick,keyPress,pactl,pamixer,consulValue,consulSet) where
 
 -- | Apps called via shell that should be replaced with libraries.
 import Data.ByteString(ByteString)
@@ -36,6 +36,19 @@ keyPress k = do
   let dsp = fromMaybe ":0" disp
   _ <- when (isNothing disp) (export "DISPLAY" dsp)
   inproc "xdotool" ["key", k] empty
+
+mouseClick :: Shell Line
+mouseClick = inproc "xdotool" ["click"] empty
+
+mouseMove :: MouseDirection -> Int -> Shell Line
+mouseMove dir n = let
+  xy = deltaT dir n
+  in do
+    disp <- need "DISPLAY"
+    let dsp = fromMaybe ":0" disp
+    _ <- when (isNothing disp) (export "DISPLAY" dsp)
+    let _ = unsafePerformIO $ putStrLn (concat (fmap T.unpack xy))
+    inproc "xdotool" (["mousemove_relative", "--"] `mappend` xy) empty
 
 consulValue :: Text -> Shell ByteString
 consulValue k = BS.inproc "consul" ["kv", "get", k] empty
