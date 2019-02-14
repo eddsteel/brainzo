@@ -6,6 +6,7 @@ module Brainzo
 
 import Brainzo.Commands
 import Brainzo.Data
+import Data.Maybe(fromJust)
 import Data.List.NonEmpty(NonEmpty((:|)))
 import Data.Text(Text)
 import Prelude hiding (FilePath, concat)
@@ -21,12 +22,12 @@ birth = do
   db <- liftIO DB.new
   return $ Brainzo e db
 
-getToWork         :: Brainzo -> [Text] -> Shell [Line]
-getToWork _ ("bleep":_) = return . NEL.toList . textToLines $ "bloop!"
+getToWork         :: Brainzo -> [Text] -> Shell Line
+getToWork _ ("bleep":_) = return . fromJust . textToLine $ "bloop!"
 getToWork b (a:as)      = goDo (M.lookup a commands) b as
 getToWork _ []          = mempty
 
-goDo :: Maybe Command -> Brainzo -> [Text] -> Shell [Line]
+goDo :: Maybe Command -> Brainzo -> [Text] -> Shell Line
 goDo Nothing _ _       = traverse err brainzoUsage >> mempty
 goDo (Just c) _ []     = err (usage c) >> mempty
 goDo (Just c) b (t:ts) = chompOp (t:|ts) (entryPoint c)

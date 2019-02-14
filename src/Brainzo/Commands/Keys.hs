@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Brainzo.Commands.Keys(command) where
 
-import Brainzo.Apps(simulateKey)
+import Brainzo.Apps(keyPress)
 import Brainzo.Data
 import Brainzo.Notify(notifyPipe)
 import Data.Text(Text)
@@ -26,7 +26,7 @@ aliases = fromList [ ("louder", "XF86AudioRaiseVolume")
                    , ("sleep", "XF86Sleep")]
 
 key :: WorkStep
-key _ (k:|rest) = (notifyPipe icon msg >> simulateKey keySym, rest)
+key _ (k:|rest) = (notifyPipe icon msg >> keyPress keySym, rest)
   where
     msg = unsafeTextToLine $ T.concat ["Keypress ", k]
     keySym = findWithDefault k k aliases

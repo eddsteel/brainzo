@@ -2,6 +2,7 @@
 module Brainzo.Commands.Radio(command,icyFormat,list,seek,kees,play,on,off,np,nps) where
 
 import Brainzo.Apps(mplayer)
+import Brainzo.Commands.NowPlaying(storeNP)
 import Brainzo.DB.BrainzoDB(radioDB)
 import Brainzo.DB.RadioDB
 import Brainzo.Data
@@ -18,7 +19,7 @@ import Data.Maybe(fromMaybe, isJust, fromJust)
 import Prelude hiding (FilePath)
 import Turtle((<>), FilePath, Pattern, Shell, Text)
 import Turtle(between, chars, choice, empty, err, grep, has, Line, lineToText, textToLines)
-import Turtle(inproc, input, liftIO, output, prefix, rm, sed, testfile, unsafeTextToLine)
+import Turtle(inproc, input, liftIO, output, prefix, rm, sed, select, testfile, unsafeTextToLine)
 import qualified Data.Text as T
 
 type Stations  = Map Line Line
@@ -49,38 +50,37 @@ radio b args @ (a:|as)
   where noConfig = isJust . Map.lookup "radio" . environment $ b
         bail t = (err t >> mempty, a:as)
 
-list :: Brainzo -> Shell Lines
-list b  = return stations
-  where
-    stations = Map.keys (parseStations b)
+list :: Brainzo -> Shell Line
+list  = select . Map.keys . parseStations
 
-seek :: Brainzo -> Shell [Line]
+seek :: Brainzo -> Shell Line
 seek  = withStationsAndDB $ \ss db -> withNP (playNext Fwd ss db) (playFirst ss db)
 
-kees :: Brainzo -> Shell [Line]
+kees :: Brainzo -> Shell Line
 kees  = withStationsAndDB $ \ss db -> withNP (playNext Bwd ss db) (playFirst ss db)
 
-play  :: Line -> Brainzo -> Shell [Line]
+play  :: Line -> Brainzo -> Shell Line
 play k = withStationsAndDB $ \ss db -> orNoop (playNamed db k <$> Map.lookup k ss)
 
-on :: Brainzo -> Shell [Line]
+on :: Brainzo -> Shell Line
 on  = withStationsAndDB $ \ss db -> withNP (playCurrent ss db) (playFirst ss db)
 
-off :: Shell [Line]
-off =  (:[]) <$> (inproc "killall" ["-q", "mplayer"] empty)
-       <|> (withNP (\_ -> npfile >>= rm >> mempty) mempty)
+off :: Shell Line
+off = inproc "killall" ["-q", "mplayer"] empty
+      <|> withNP (\_ -> npfile >>= rm >> mempty) mempty
 
-np :: Brainzo -> Shell [Line]
-np b = retrieve b >>= notify
-  where retrieve :: Brainzo -> Shell [Line]
-        retrieve = withStationsAndDB $ \_ db -> withNP (nowPlaying db) (return ["off"])
-        nowPlaying :: RadioDB -> Line -> Shell [Line]
-        nowPlaying db _ =  liftIO $ fmap ((:[]) . toLine) (DB.retrieve db)
-        notify :: Lines -> Shell Lines
-        notify = notifyPipe icon . head
+np :: Brainzo -> Shell Line
+np b = retrieve b >>= notifyPipe icon
+  where retrieve :: Brainzo -> Shell Line
+        retrieve = withStationsAndDB $ \_ db -> withNP (nowPlaying db) (return "off")
+        nowPlaying :: RadioDB -> Line -> Shell Line
+        nowPlaying db _ =  liftIO $ fmap toLine (DB.retrieve db)
 
-nps :: Brainzo -> Shell [Line]
-nps  = withStationsAndDB $ \_ db -> liftIO $ fmap (NEL.toList . textToLines . station) (DB.retrieve db)
+nps :: Brainzo -> Shell Line
+nps  = withStationsAndDB stored
+  where
+    stored _ db = storedIO db >>= select
+    storedIO db = liftIO $ fmap (NEL.toList . textToLines . station) (DB.retrieve db)
 
 -- helpers
 withStationsAndDB :: (Stations -> RadioDB -> Shell a) -> Brainzo -> Shell a
@@ -92,18 +92,17 @@ withStationsAndDB fn b =
    fn config db
 
 
-playNamed :: RadioDB -> Line -> Line -> Shell [Line]
+playNamed :: RadioDB -> Line -> Line -> Shell Line
 playNamed db key url = off
   <|> (npfile >>= \file -> output file (return key) >> mempty)
-  -- play radio, piping NP to store. Start with empty string
-  -- so that we get an entry for stations that don't publish
-  -- now playing info.
   <|> player url >>= store . name >>= notifyAllPipe icon
-  where store  :: NowPlaying -> Shell [Text]
-        store n = liftIO ((:[]) <$> DB.store n db)
-        name :: Lines -> NowPlaying
-        name ls = fromStationTrack (lineToText key) (lineToText (head ls))
-
+  where
+    store n = do
+      r <- liftIO $ DB.store n db
+      _ <- storeNP n
+      return r
+    name :: Line -> NowPlaying
+    name l = fromStationTrack (lineToText key) (lineToText l)
 
 icyPrefix :: Pattern Text
 icyPrefix = "ICY Info: StreamTitle"
@@ -116,12 +115,12 @@ icyFormat = do
     , has $ between (icyPrefix <> "='") "';" chars] -- :(
 
 -- run mplayer
-player :: Line -> Shell [Line]
+player :: Line -> Shell Line
 player url =
   let filtered = grep (prefix icyPrefix) (mplayer url)
-  in (:[]) <$> sed icyFormat filtered
+  in sed icyFormat filtered
 
-playNext :: Direction -> Stations -> RadioDB -> Line -> Shell [Line]
+playNext :: Direction -> Stations -> RadioDB -> Line -> Shell Line
 playNext d c db key  = uncurry (playNamed db) next
   where
     streams Fwd = Prelude.concat . repeat . Map.toList
@@ -129,14 +128,14 @@ playNext d c db key  = uncurry (playNamed db) next
     second = head . tail
     next = second (dropWhile ((/= key) . fst) (streams d c))
 
-playFirst :: Stations -> RadioDB -> Shell [Line]
+playFirst :: Stations -> RadioDB -> Shell Line
 playFirst s db  = (uncurry (playNamed db) . (head . Map.toList)) s
 
-playCurrent :: Stations -> RadioDB -> Line -> Shell [Line]
+playCurrent :: Stations -> RadioDB -> Line -> Shell Line
 playCurrent s db k = uncurry (playNamed db) current
   where current = head $ filter ((== k) . fst) (Map.toList s)
 
-withNP :: (Line -> Shell [Line]) -> Shell [Line] -> Shell [Line]
+withNP :: (Line -> Shell a) -> Shell a -> Shell a
 withNP f g =
   do
     nf <- npfile

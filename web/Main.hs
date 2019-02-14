@@ -11,8 +11,7 @@ import Text.Blaze.Html5.Attributes (href)
 import qualified Data.Text as T
 import qualified Text.Blaze.Html5 as H
 import qualified Text.Blaze.Html5.Attributes as A
-import qualified Control.Foldl as L
-import Turtle(sh, liftIO, fold, lineToText, Line)
+import Turtle(sh, liftIO, lineToText, Line, strict)
 
 main :: IO ()
 main = sh $ do
@@ -43,9 +42,8 @@ bzHandler :: Brainzo -> Text -> ServerPart Response
 bzHandler b rest =
   let ts = tail $ "/" `T.splitOn` rest
       out = getToWork b ts
-      output = fold out $ L.foldMap linesToText id
   in
-    output >>= ok . toResponse
+   strict out >>= ok . toResponse
 
 usage :: ServerPart Response
 usage = ok . template "Bleep Bloop" $ H.pre . H.code . toHtml . linesToText . NEL.toList $ brainzoUsage
@@ -62,7 +60,6 @@ serveJs :: Text -> ServerPart Response
 serveJs s = ok . template s $ do
   H.script ! A.src "foo" $ ""
   H.div ! A.class_ "canvas" $ ""
-
 
 linesToText :: [Line] -> Text
 linesToText = T.concat . fmap lineToText
