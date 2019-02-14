@@ -38,7 +38,7 @@ keyPress k = do
   inproc "xdotool" ["key", k] empty
 
 mouseClick :: Shell Line
-mouseClick = inproc "xdotool" ["click"] empty
+mouseClick = inproc "xdotool" ["click", "1"] empty
 
 mouseMove :: MouseDirection -> Int -> Shell Line
 mouseMove dir n = let
