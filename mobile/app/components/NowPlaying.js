@@ -24,7 +24,7 @@ export default class NowPlaying extends PureComponent {
                 style={{
                     fontSize: 20,
                     textAlign: 'center',
-                    margin: 10,
+                    margin: 5,
                     color: '#ff00dd',
 
                 }}

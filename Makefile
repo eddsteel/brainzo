@@ -12,9 +12,9 @@ release: mobile/brainzo.apk
 mobile/brainzo.apk:
 	cd mobile/android && \
 	./gradlew assembleRelease && \
-	cd app/build/outputs/apk && \
+	cd app/build/outputs/apk/release && \
 	jarsigner -keystore ~/.secrets/android.keystore app-release-unsigned.apk edd && \
-	mv app-release-unsigned.apk ../../../../../brainzo.apk
+	mv app-release-unsigned.apk ../../../../../../brainzo.apk
 
 install: mobile/brainzo.apk
 	adb install -r mobile/brainzo.apk

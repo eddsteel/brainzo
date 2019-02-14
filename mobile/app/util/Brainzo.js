@@ -8,6 +8,13 @@ export default class Brainzo {
             });
     }
 
+    mouse(sym) {
+        fetch(Brainzo.home + "/mouse/" + sym)
+            .catch((error) => {
+                console.error(error);
+            });
+    }
+
     nowPlaying() {
         console.debug("get now playing")
         return fetch(Brainzo.home + "/np/get")

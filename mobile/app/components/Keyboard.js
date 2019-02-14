@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+ import React, { Component } from 'react';
 import { putAsync } from 'js-csp';
 import {
     View,
@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 
 import Key from './Key';
+import Mouse from './Mouse';
 
 const styles = {
     keyblock: {
@@ -44,6 +45,7 @@ export default class Keyboard extends Component {
 
     render() {
         var ch = this.props.chan;
+        var mc = this.props.mchan;
         return (
             <View style={{alignItems: 'center'}}>
               <View style={{flexDirection: 'row'}}>
@@ -57,46 +59,44 @@ export default class Keyboard extends Component {
               <View style={styles.keyblockrow}>
                 <View style={styles.keyblock}>
                   <View style={styles.keyblockrow}>
-                    <Key chan={ch} sym="XF86AudioPrev" icon="skip-previous"/>
-                    <Key chan={ch} sym="XF86AudioPlay" icon="play-arrow"/>
-                    <Key chan={ch} sym="XF86AudioNext" icon="skip-next"/>
+                <Key chan={ch} sym="super+shift+f" icon="maximize"/>
+                    <Key chan={ch} sym="XF86AudioPlay" icon="play"/>
+                    <Key chan={ch} sym="super+w" icon="x"/>
                   </View>
                   <View style={styles.keyblockrow}>
-                    <Key chan={ch} sym="rwd"  icon="navigate-before"/>
+                    <Key chan={ch} sym="rwd"  icon="chevron-left"/>
                     <Key chan={ch} sym="play" icon="code"/>
-                    <Key chan={ch} sym="fwd"  icon="navigate-next"/>
+                    <Key chan={ch} sym="fwd"  icon="chevron-right"/>
                   </View>
                   <View style={styles.keyblockrow}>
-                    <Key chan={ch} sym="quieter" icon="volume-down"/>
-                    <Key chan={ch} sym="XF86AudioMute" icon="volume-mute"/>
-                    <Key chan={ch} sym="louder" icon="volume-up"/>
+                    <Key chan={ch} sym="quieter" icon="volume-1"/>
+                    <Key chan={ch} sym="XF86AudioMute" icon="volume-x"/>
+                    <Key chan={ch} sym="louder" icon="volume-2"/>
                   </View>
                 </View>
                 <View style={styles.keyblock}>
                   <View style={styles.keyblockrow}>
-                    <Key chan={ch} sym="super+shift+f" icon="fullscreen"/>
-                    <Key chan={ch} sym="Up" icon="arrow-upward"/>
-                    <Key chan={ch} sym="super+w" icon="close"/>
+                    <Mouse chan={mc} sym="NW" icon="arrow-up-left"/>
+                    <Mouse chan={mc} sym="N" icon="arrow-up"/>
+                    <Mouse chan={mc} sym="NE" icon="arrow-up-right"/>
                   </View>
                   <View style={styles.keyblockrow}>
-                    <Key chan={ch} sym="Left" icon="arrow-back"/>
-                    <Key chan={ch} sym="Down" icon="arrow-downward"/>
-                    <Key chan={ch} sym="Right" icon="arrow-forward"/>
+                    <Mouse chan={mc} sym="W" icon="arrow-left"/>
+                    <Mouse chan={mc} sym="click" icon="circle"/>
+                    <Mouse chan={mc} sym="E" icon="arrow-right"/>
                   </View>
                   <View style={styles.keyblockrow}>
-                    <Key chan={ch} sym="Escape" icon="launch"/>
-                    <Key chan={ch} sym="Tab" icon="keyboard-tab"/>
-                    <Key chan={ch} sym="Return" icon="keyboard-return"/>
+                    <Mouse chan={mc} sym="SW" icon="arrow-down-left"/>
+                    <Mouse chan={mc} sym="S" icon="arrow-down"/>
+                    <Mouse chan={mc} sym="SE" icon="arrow-down-right"/>
                   </View>
                 </View>
               </View>
               <View style={styles.keyblockrow}>
-                <Key chan={ch} sym="super+shift+e" icon="mode-edit"/>
-                <Key chan={ch} sym="super+shift+w" icon="music-note"/>
-                <Key chan={ch} sym="super+shift+g" icon="movie"/>
-                <Key chan={ch} sym="super+shift+k" icon="tv"/>
-                <Key chan={ch} sym="super+Tab" icon="exit-to-app"/>
-                <Key chan={ch} sym="sleep" icon="power-settings-new"/>
+                <Key chan={ch} sym="super+shift+e" icon="file-text"/>
+                <Key chan={ch} sym="super+shift+w" icon="film"/>
+                <Key chan={ch} sym="super+Tab" icon="external-link"/>
+                <Key chan={ch} sym="sleep" icon="power"/>
               </View>
             </View>
         );
