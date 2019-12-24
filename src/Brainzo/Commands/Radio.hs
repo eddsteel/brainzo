@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Brainzo.Commands.Radio(command,icyFormat,list,seek,kees,play,on,off,np,nps) where
+module Brainzo.Commands.Radio(command,icyFormat,list,seek,kees,play,on,off,np,nps,toggle) where
 
 import Brainzo.Apps(mplayer)
 import Brainzo.Commands.NowPlaying(storeNP)
@@ -46,6 +46,7 @@ radio b args @ (a:|as)
       ("off":|r)    -> (off, r)
       ("np":|r)     -> (np b, r)
       ("nps":|r)    -> (nps b, r)
+      ("toggle":|r) -> (toggle b, r)
       (op:|_)       -> bail . unsafeTextToLine . T.concat $ ["radio doesn't understand ", op, "."]
   where noConfig = isJust . Map.lookup "radio" . environment $ b
         bail t = (err t >> mempty, a:as)
@@ -68,6 +69,9 @@ on  = withStationsAndDB $ \ss db -> withNP (playCurrent ss db) (playFirst ss db)
 off :: Shell Line
 off = inproc "killall" ["-q", "mplayer"] empty
       <|> withNP (\_ -> npfile >>= rm >> mempty) mempty
+
+toggle  :: Brainzo -> Shell Line
+toggle b = withNP (const off) (on b)
 
 np :: Brainzo -> Shell Line
 np b = retrieve b >>= notifyPipe icon
@@ -158,6 +162,6 @@ icon =  unsafeTextToLine "media-playback-start"
 command :: Command
 command  = Cmd "radio" args radio ["radio.stations"]
   where args = [ "list", "play <station>"
-               , "on", "off"
+               , "on", "off", "toggle"
                , "seek", "kees"
                , "np", "nps"]
