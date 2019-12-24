@@ -11,12 +11,18 @@ import Text.Blaze.Html5.Attributes (href)
 import qualified Data.Text as T
 import qualified Text.Blaze.Html5 as H
 import qualified Text.Blaze.Html5.Attributes as A
+import System.Environment
 import Turtle(sh, liftIO, lineToText, Line, strict)
 
 main :: IO ()
 main = sh $ do
   brainzo <- birth
-  liftIO $ serve (Just $ defaultServerConfig {port = 4242}) (api brainzo)
+  p <- liftIO $ getArgs >>= port
+  liftIO $ serve (Just $ defaultServerConfig {port = p}) (api brainzo)
+   where
+     port :: [String] -> IO Int
+     port []    = pure 4242
+     port (p:_) = pure $ read p
 
 api :: Brainzo -> ServerPart Response
 api b = msum [

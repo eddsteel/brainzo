@@ -1,0 +1,68 @@
+name: brainzo
+version: 0.1.0.0
+github: "eddsteel/brainzo"
+license: BSD3
+author: Edd Steel <edd@eddsteel.com>
+extra-source-files:
+  - README.md
+dependencies:
+- aeson
+- base
+- bytestring
+- ConfigFile
+- MissingH
+- containers
+- dbus
+- directory
+- fdo-notify
+- foldl
+- fraction
+- mtl
+- process
+- regex-applicative-text
+- safe
+- sqlite-simple
+- strict
+- system-filepath
+- text
+- time
+- turtle
+- unordered-containers
+library:
+  source-dirs: src
+executables:
+  b:
+    source-dirs: app
+    main: Main.hs
+    ghc-options:
+    - -Wall
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - brainzo
+  brainzo-api:
+    source-dirs: web
+    main: Main.hs
+    ghc-options:
+    - -Wall
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - brainzo
+    - blaze-html
+    - happstack-lite
+    - happstack-server
+tests:
+  main:
+    source-dirs: test
+    main: Spec.hs
+    dependencies:
+    - brainzo
+    - hspec
+    ghc-options:
+      - -Wall
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
