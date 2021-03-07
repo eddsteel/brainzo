@@ -1,0 +1,12 @@
+[Unit]
+Description=Starts brainzo-api service
+
+[Service]
+Type=simple
+Restart=always
+ExecStart=/usr/bin/brainzo-api
+KillMode=process
+TimeoutSec=180
+
+[Install]
+WantedBy=default.target
