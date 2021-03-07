@@ -4,45 +4,49 @@ module Brainzo.Commands.NowPlaying(command, retrieveNP, storeNP) where
 import Brainzo.Apps(consulSet, consulValue)
 import Brainzo.Data
 import Brainzo.Data.NowPlaying
-import Brainzo.Notify
-import Data.Aeson
-import Data.List.NonEmpty(NonEmpty((:|)))
-import Data.Maybe(maybeToList, fromMaybe)
-import qualified Data.List.NonEmpty as NEL
-import qualified Data.Text as T
-import Data.Text.Encoding(encodeUtf8,decodeUtf8)
-import Turtle
+import Brainzo.Util(bail)
+import Brainzo.Processes(notifyPipe, encodeJSON, decodeJSON, decodeKV)
+import Data.List.NonEmpty(NonEmpty((:|))) 
+import Data.Time.Clock.POSIX(getPOSIXTime,POSIXTime)
+import Turtle(Shell, Line, Text, liftIO, unsafeTextToLine, lineToText,echo)
 
 nowPlaying :: WorkStep
-nowPlaying _ ("get":|r) = (retrieveNP, r)
-nowPlaying _ ("display":|r) = (displayNP, r)
-nowPlaying _ ("set":|json:r) = (parseAndSetNP json, r)
-nowPlaying _ as@(op:|_) = (bail $ T.concat ["np doesn't understand ", op, "."], NEL.toList as)
-  where bail t = err (unsafeTextToLine t) >> return mempty
+nowPlaying args = case args of
+  ("get":|_)        -> getNP
+  ("display":|_)    -> displayNP
+  ("set":|json:_)   -> parseJSAndSetNP json
+  ("set-kv":|kvs:_) -> parseKVAndSetNP kvs
+  _                 -> bail "np" args
 
-retrieveNP :: Shell Line
-retrieveNP = do
-  consulJSON <- consulValue "now-playing"
-  let np = decodeStrict consulJSON :: Maybe NowPlaying
-  let result = toLine <$> maybeToList np
-  select result
+getNP :: Shell Line
+getNP = toLine <$> retrieveNP
 
-parseAndSetNP :: Text -> Shell Line
-parseAndSetNP json =
-  let np = decodeStrict (encodeUtf8 json) :: Maybe NowPlaying
-  in fromMaybe empty $ storeNP <$> np
+retrieveNP :: Shell NowPlaying
+retrieveNP = consulValue "now-playing" >>= decodeJSON
+
+parseJSAndSetNP :: Text -> Shell Line
+parseJSAndSetNP json = decodeJSON (unsafeTextToLine json) >>= storeNP
+
+parseKVAndSetNP :: Text -> Shell Line
+parseKVAndSetNP ks = decodeKV (unsafeTextToLine ks) >>= storeNP
 
 storeNP  :: NowPlaying -> Shell Line
-storeNP = (>>= select . textToLines . decodeUtf8) . consulSet "now-playing" . encode
+storeNP np = do
+  json <- epoched np >>= encodeJSON
+  _ <- echo json
+  consulSet "now-playing" . lineToText $ json
 
 displayNP :: Shell Line
-displayNP = do
-  result <- retrieveNP
-  _ <- notifyPipe icon result
-  return result
+displayNP = getNP >>= notifyPipe icon
+
+epoched :: NowPlaying -> Shell NowPlaying
+epoched np = stamped np <$> epoch
+
+epoch :: Shell POSIXTime
+epoch = liftIO getPOSIXTime
 
 icon :: Line
 icon = unsafeTextToLine "media-playback-start"
 
 command :: Command
-command  = Cmd "np" ["display", "get", "set <json>"] nowPlaying []
+command  = Cmd "np" ["display", "get", "set <json>", "set-kv <k1=v1,k2=v2>"] nowPlaying []

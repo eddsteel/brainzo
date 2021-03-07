@@ -3,6 +3,7 @@ module Brainzo.Commands.Audio(command, louder, quieter, mute, micmute, mixer) wh
 
 import Brainzo.Apps(pactl)
 import Brainzo.Data
+import Brainzo.Util(bail)
 import Data.List.NonEmpty(NonEmpty((:|)))
 import Data.List(delete)
 import qualified Data.Text as T
@@ -10,19 +11,18 @@ import Text.Read(readMaybe)
 import Turtle
 
 audio :: WorkStep
-audio _ args @ (a:|as) = case args of
-  ("louder":|i:r)  -> (readOrBail i louder, r)
-  ("quieter":|i:r) -> (readOrBail i quieter, r)
-  ("mute":|r)      -> (mute, r)
-  ("micmute":|r)   -> (micmute, r)
-  ("mixer":|r)     -> (mixer, r)
-  ("switch":|r)    -> (switchChannel Sink, r)
-  (op:|_)          -> (bail $ T.concat ["audio doesn't understand ", op, "."], a:as)
-  where bail t = err (unsafeTextToLine t) >> return mempty
-        readOrBail :: Read a => Text -> (a -> Shell Line) -> Shell Line
+audio args = case args of
+  ("louder" :|i:_) -> readOrBail i louder
+  ("quieter":|i:_) -> readOrBail i quieter
+  ("mute"   :|_)   -> mute
+  ("micmute":|_)   -> micmute
+  ("mixer"  :|_)   -> mixer
+  ("switch" :|_)   -> switchChannel Sink
+  _                -> bail "audio" args
+  where readOrBail :: Read a => Text -> (a -> Shell Line) -> Shell Line
         readOrBail str fun = case readMaybe . T.unpack $ str of
                                Just i  -> fun i
-                               Nothing -> bail "invalid number"
+                               Nothing -> bail "audio" args
 
 louder :: Int -> Shell Line
 louder  = adjustChannel Sink Up

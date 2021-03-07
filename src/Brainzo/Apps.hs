@@ -1,20 +1,24 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Brainzo.Apps(browser,mplayer,mouseMove,mouseClick,keyPress,pactl,pamixer,consulValue,consulSet) where
+module Brainzo.Apps(browser,mplayer,mouseMove,mouseClick,keyPress,killall,pactl,pamixer,consulValue,consulSet) where
 
--- | Apps called via shell that should be replaced with libraries.
+-- | Apps called via shell that should be replaced with libraries
+-- (and then they should move to (processes))
 import Data.ByteString(ByteString)
 import Data.Maybe(fromMaybe, isNothing)
 import qualified Data.Text as T
 import Turtle
 import qualified Turtle.Bytes as BS
 import Data.Text.Lazy(toStrict)
-import Data.Text.Lazy.Encoding
+import Data.Text.Encoding
 import qualified Data.ByteString.Lazy as LBS
 import Brainzo.Data.Mouse(MouseDirection, deltaT)
 import System.IO.Unsafe(unsafePerformIO)
 
 browser    :: Text -> Shell Line
 browser url = inproc "xdg-open" [url] empty
+
+dotool :: Text
+dotool = "ydotool"
 
 -- run mplayer
 mplayerOptions :: [Text]
@@ -35,10 +39,10 @@ keyPress k = do
   disp <- need "DISPLAY"
   let dsp = fromMaybe ":0" disp
   _ <- when (isNothing disp) (export "DISPLAY" dsp)
-  inproc "xdotool" ["key", k] empty
+  inproc dotool ["key", k] empty
 
 mouseClick :: Shell Line
-mouseClick = inproc "xdotool" ["click", "1"] empty
+mouseClick = inproc dotool ["click", "1"] empty
 
 mouseMove :: MouseDirection -> Int -> Shell Line
 mouseMove dir n = let
@@ -48,11 +52,13 @@ mouseMove dir n = let
     let dsp = fromMaybe ":0" disp
     _ <- when (isNothing disp) (export "DISPLAY" dsp)
     let _ = unsafePerformIO $ putStrLn (concat (fmap T.unpack xy))
-    inproc "xdotool" (["mousemove_relative", "--"] `mappend` xy) empty
+    inproc dotool ("mousemove" : "--" : xy) empty
 
-consulValue :: Text -> Shell ByteString
-consulValue k = BS.inproc "consul" ["kv", "get", k] empty
+consulValue :: Text -> Shell Line
+consulValue k = inproc "consul" ["kv", "get", k] empty
 
-consulSet :: LBS.ByteString -> LBS.ByteString -> Shell ByteString
-consulSet k v = BS.inproc "consul" ["kv", "put", force k, force v] empty
-  where force = toStrict . decodeUtf8
+consulSet :: Text -> Text -> Shell Line
+consulSet k v = inproc "consul" ["kv", "put", k, v] empty
+
+killall :: Text -> Shell Line
+killall name = inproc "killall" ["-q", name] empty

@@ -1,13 +1,11 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.33.0.
+-- This file has been generated from package.yaml by hpack version 0.34.3.
 --
 -- see: https://github.com/sol/hpack
---
--- hash: b39504fa4fe4f75826bb9d193237c8e3dbdbeed949245dddaafe660934a8b9bf
 
 name:           brainzo
-version:        0.1.0.0
+version:        0.2.0.0
 homepage:       https://github.com/eddsteel/brainzo#readme
 bug-reports:    https://github.com/eddsteel/brainzo/issues
 author:         Edd Steel <edd@eddsteel.com>
@@ -33,7 +31,7 @@ library
       Brainzo.Commands.Mouse
       Brainzo.Commands.NowPlaying
       Brainzo.Commands.Radio
-      Brainzo.Commands.Transmission
+      Brainzo.Commands.Version
       Brainzo.Data
       Brainzo.Data.Mouse
       Brainzo.Data.NowPlaying
@@ -41,7 +39,7 @@ library
       Brainzo.DB.BrainzoDB
       Brainzo.DB.RadioDB
       Brainzo.File
-      Brainzo.Notify
+      Brainzo.Processes
       Brainzo.Util
   other-modules:
       Paths_brainzo

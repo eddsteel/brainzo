@@ -8,12 +8,12 @@ import Data.List.NonEmpty(NonEmpty((:|)))
 import Turtle(err)
 
 mouse :: WorkStep
-mouse _ ("click":|rest) = (mouseClick, rest)
-mouse _ (dir:|rest) = let
-  mdir = readDirection dir
+mouse ("click":|_) = mouseClick
+mouse (dir:|_) =
+  let mdir = readDirection dir
   in case mdir of
-    Just d -> (mouseMove d 20, rest)
-    Nothing -> (err "bad direction" >> mempty, rest)
+    Just d -> mouseMove d 20
+    Nothing -> err "bad direction" >> mempty
 
 command :: Command
 command = Cmd "mouse" ["<direction or 'click'>"] mouse []

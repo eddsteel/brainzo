@@ -15,22 +15,21 @@ import System.Environment
 import Turtle(sh, liftIO, lineToText, Line, strict)
 
 main :: IO ()
-main = sh $ do
-  brainzo <- birth
-  p <- liftIO $ getArgs >>= port
-  liftIO $ serve (Just $ defaultServerConfig {port = p}) (api brainzo)
+main = sh $ do  
+  p <- liftIO $ getArgs >>= portArg
+  liftIO $ serve (Just $ defaultServerConfig {port = p}) api
    where
-     port :: [String] -> IO Int
-     port []    = pure 4242
-     port (p:_) = pure $ read p
+     portArg :: [String] -> IO Int
+     portArg []    = pure 4242
+     portArg (p:_) = pure $ read p
 
-api :: Brainzo -> ServerPart Response
-api b = msum [
+api :: ServerPart Response
+api = msum [
   dir "js" $ path (\f -> serveFile
                          (asContentType "application/javascript")
                          (concat ["js/", f, ".js"]))
   , dir "key" $ nullDir >> keyboard
-  , uriRest (bzHandler b . T.pack)
+  , uriRest (bzHandler . T.pack)
   , usage ]
 
 emptyBody :: Response
@@ -44,10 +43,10 @@ template title body =
     H.body $ do
       body
 
-bzHandler :: Brainzo -> Text -> ServerPart Response
-bzHandler b rest =
+bzHandler :: Text -> ServerPart Response
+bzHandler rest =
   let ts = tail $ "/" `T.splitOn` rest
-      out = getToWork b ts
+      out = getToWork ts
   in
    strict out >>= ok . toResponse
 

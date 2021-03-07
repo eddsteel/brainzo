@@ -3,6 +3,7 @@ module Brainzo.DB.RadioDB
        ( NowPlaying
        , RadioDB
        , newDB
+       , storeDB
        , dbFile) where
 
 import Brainzo.Util
@@ -13,8 +14,12 @@ import Data.Text hiding (head)
 import Prelude hiding (FilePath, concat, unlines)
 import Database.SQLite.Simple
 import System.Directory(doesFileExist)
+import Turtle(Line, Shell, liftIO)
 
 data RadioDB = DB Text
+
+storeDB :: NowPlaying -> Shell Text
+storeDB np = liftIO $ newDB >>= store np
 
 newDB :: IO RadioDB
 newDB  = do

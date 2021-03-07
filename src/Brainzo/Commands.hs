@@ -9,6 +9,7 @@ import qualified Brainzo.Commands.GoogleMaps as Maps
 import qualified Brainzo.Commands.Keys as Keys
 import qualified Brainzo.Commands.Mouse as Mouse
 import qualified Brainzo.Commands.NowPlaying as NowPlaying
+import qualified Brainzo.Commands.Version as Version
 import Data.List(intersperse)
 import qualified Data.Text as T
 import Data.Map.Strict(Map, fromList)
@@ -23,4 +24,5 @@ commands = fromList [ ("audio", Audio.command)
                     , ("map",   Maps.command)
                     , ("mouse", Mouse.command)
                     , ("np",    NowPlaying.command)
-                    , ("radio", Radio.command)]
+                    , ("radio", Radio.command)
+                    , ("version", Version.command)]

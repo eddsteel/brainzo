@@ -9,3 +9,4 @@ import Data.Text
 class NPStorage s where
   retrieve :: s -> IO NowPlaying
   store    :: NowPlaying -> s -> IO Text
+

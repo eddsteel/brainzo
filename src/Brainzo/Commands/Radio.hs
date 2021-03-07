@@ -1,28 +1,29 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Brainzo.Commands.Radio(command,icyFormat,list,seek,kees,play,on,off,np,nps,toggle) where
+module Brainzo.Commands.Radio(command,icyFormat,list,seek,kees,play,on,off,toggle) where
 
-import Brainzo.Apps(mplayer)
-import Brainzo.Commands.NowPlaying(storeNP)
+import Brainzo.Apps(mplayer, killall, consulSet)
 import Brainzo.DB.BrainzoDB(radioDB)
 import Brainzo.DB.RadioDB
 import Brainzo.Data
 import Brainzo.Data.NowPlaying(NowPlaying, fromStationTrack, toLine, station)
-import Brainzo.File(brainzoFile)
-import qualified Brainzo.Data.Storage as DB
-import Brainzo.Notify
+import Brainzo.File(brainzoFile, configMap)
+import Brainzo.Processes(notifyPipe, notifyAllPipe, encodeJSON)
+import Brainzo.Util(bail)
 import Control.Applicative((<|>))
+import Data.Bool(bool)
 import Data.List.NonEmpty(NonEmpty((:|)))
-import qualified Data.List.NonEmpty as NEL
 import Data.Map.Strict(Map)
-import qualified Data.Map.Strict as Map
 import Data.Maybe(fromMaybe, isJust, fromJust)
 import Prelude hiding (FilePath)
 import Turtle((<>), FilePath, Pattern, Shell, Text)
 import Turtle(between, chars, choice, empty, err, grep, has, Line, lineToText, textToLines)
 import Turtle(inproc, input, liftIO, output, prefix, rm, sed, select, testfile, unsafeTextToLine)
+import qualified Brainzo.Data.Storage as DB
+import qualified Data.List.NonEmpty as NEL
+import qualified Data.Map.Strict as Map
 import qualified Data.Text as T
 
-type Stations  = Map Line Line
+type Stations  = Map Text Text
 data Direction = Bwd | Fwd
 
 npfile :: Shell FilePath
@@ -31,82 +32,88 @@ npfile = brainzoFile "radio-np"
 pidfile :: Shell FilePath
 pidfile = brainzoFile "radio.pid"
 
-orNoop :: Maybe (Shell a) -> Shell a
-orNoop = fromMaybe empty
+stationfile :: Shell FilePath
+stationfile = brainzoFile "radio.stations"
 
 radio :: WorkStep
-radio b args @ (a:|as)
-  | noConfig  = (err "radio needs some stations." >> mempty , a:as)
-  | otherwise = case args of
-      ("list":|r)   -> (list b, r)
-      ("play":|k:r) -> (play (unsafeTextToLine k) b, r)
-      ("seek":|r)   -> (seek b, r)
-      ("kees":|r)   -> (kees b, r)
-      ("on":|r)     -> (on b, r)
-      ("off":|r)    -> (off, r)
-      ("np":|r)     -> (np b, r)
-      ("nps":|r)    -> (nps b, r)
-      ("toggle":|r) -> (toggle b, r)
-      (op:|_)       -> bail . unsafeTextToLine . T.concat $ ["radio doesn't understand ", op, "."]
-  where noConfig = isJust . Map.lookup "radio" . environment $ b
-        bail t = (err t >> mempty, a:as)
+radio args = configured <|> case args of
+  ("list"  :|_  ) -> list
+  ("play"  :|k:_) -> play (unsafeTextToLine k)
+  ("seek"  :|_  ) -> seek
+  ("kees"  :|_  ) -> kees
+  ("on"    :|_  ) -> on
+  ("off"   :|_  ) -> off
+  ("toggle":|_  ) -> toggle
+  _               -> bail "radio" args
+  
+configured :: Shell Line
+configured = do
+  np <- npfile
+  valid <- testfile np
+  if valid then empty else (err "radio needs some stations." >> empty)
 
-list :: Brainzo -> Shell Line
-list  = select . Map.keys . parseStations
+list :: Shell Line
+list = unsafeTextToLine <$> (stations >>= select . Map.keys)
 
-seek :: Brainzo -> Shell Line
-seek  = withStationsAndDB $ \ss db -> withNP (playNext Fwd ss db) (playFirst ss db)
+seek :: Shell Line
+seek = nextStation Fwd >>= playStation
 
-kees :: Brainzo -> Shell Line
-kees  = withStationsAndDB $ \ss db -> withNP (playNext Bwd ss db) (playFirst ss db)
+kees :: Shell Line
+kees = nextStation Bwd >>= playStation
 
-play  :: Line -> Brainzo -> Shell Line
-play k = withStationsAndDB $ \ss db -> orNoop (playNamed db k <$> Map.lookup k ss)
+play :: Line -> Shell Line
+play = playStation
 
-on :: Brainzo -> Shell Line
-on  = withStationsAndDB $ \ss db -> withNP (playCurrent ss db) (playFirst ss db)
+on :: Shell Line
+on = currentStation >>= playStation
 
 off :: Shell Line
-off = inproc "killall" ["-q", "mplayer"] empty
-      <|> withNP (\_ -> npfile >>= rm >> mempty) mempty
+off = stopRadio
 
-toggle  :: Brainzo -> Shell Line
-toggle b = withNP (const off) (on b)
-
-np :: Brainzo -> Shell Line
-np b = retrieve b >>= notifyPipe icon
-  where retrieve :: Brainzo -> Shell Line
-        retrieve = withStationsAndDB $ \_ db -> withNP (nowPlaying db) (return "off")
-        nowPlaying :: RadioDB -> Line -> Shell Line
-        nowPlaying db _ =  liftIO $ fmap toLine (DB.retrieve db)
-
-nps :: Brainzo -> Shell Line
-nps  = withStationsAndDB stored
-  where
-    stored _ db = storedIO db >>= select
-    storedIO db = liftIO $ fmap (NEL.toList . textToLines . station) (DB.retrieve db)
+toggle :: Shell Line
+toggle = isPlaying >>= bool on off
 
 -- helpers
-withStationsAndDB :: (Stations -> RadioDB -> Shell a) -> Brainzo -> Shell a
-withStationsAndDB fn b =
+
+stopRadio :: Shell Line
+stopRadio = killall "mplayer" *> (npfile >>= rm) *> empty
+
+stations :: Shell Stations
+stations = stationfile >>= configMap
+
+playStation :: Line -> Shell Line
+playStation key = stationURL key >>= player >>= storeCurrent key
+
+storeCurrent :: Line -> Line -> Shell Line
+storeCurrent k o =
   let
-    db = radioDB $ database b
-    config = parseStations b
+    np = fromStationTrack (lineToText k) (lineToText o)    
   in
-   fn config db
+    off
+   <* (encodeJSON np >>= consulSet "now-playing" . lineToText)
+   <* (npfile >>= \f -> output f (pure k))
+   <* (storeDB np >>= notifyAllPipe icon)
 
+firstStation :: Shell (Text, Text)
+firstStation = head . Map.toList <$> stations
 
-playNamed :: RadioDB -> Line -> Line -> Shell Line
-playNamed db key url = off
-  <|> (npfile >>= \file -> output file (return key) >> mempty)
-  <|> player url >>= store . name >>= notifyAllPipe icon
+stationURL  :: Line -> Shell Line
+stationURL k = unsafeTextToLine <$> url
+  where url = (pure fromMaybe) <*> (snd <$> firstStation) <*> (Map.lookup (lineToText k) <$> stations)
+
+isPlaying :: Shell Bool
+isPlaying = npfile >>= testfile
+
+currentStation :: Shell Line
+currentStation = isPlaying >>= bool empty (npfile >>= input)
+
+nextStation :: Direction -> Shell Line
+nextStation dir = unsafeTextToLine <$> (isPlaying >>= bool first next)
   where
-    store n = do
-      r <- liftIO $ DB.store n db
-      _ <- storeNP n
-      return r
-    name :: Line -> NowPlaying
-    name l = fromStationTrack (lineToText key) (lineToText l)
+    first = fst <$> firstStation
+    keys Fwd = Prelude.concat . repeat . Map.keys <$> stations
+    keys Bwd = Prelude.concat . repeat . reverse . Map.keys <$> stations
+    next = (lineToText <$> currentStation) >>= \ key -> head . tail . dropWhile (/= key) <$> keys dir
 
 icyPrefix :: Pattern Text
 icyPrefix = "ICY Info: StreamTitle"
@@ -123,38 +130,6 @@ player :: Line -> Shell Line
 player url =
   let filtered = grep (prefix icyPrefix) (mplayer url)
   in sed icyFormat filtered
-
-playNext :: Direction -> Stations -> RadioDB -> Line -> Shell Line
-playNext d c db key  = uncurry (playNamed db) next
-  where
-    streams Fwd = Prelude.concat . repeat . Map.toList
-    streams Bwd = Prelude.concat . repeat . reverse . Map.toList
-    second = head . tail
-    next = second (dropWhile ((/= key) . fst) (streams d c))
-
-playFirst :: Stations -> RadioDB -> Shell Line
-playFirst s db  = (uncurry (playNamed db) . (head . Map.toList)) s
-
-playCurrent :: Stations -> RadioDB -> Line -> Shell Line
-playCurrent s db k = uncurry (playNamed db) current
-  where current = head $ filter ((== k) . fst) (Map.toList s)
-
-withNP :: (Line -> Shell a) -> Shell a -> Shell a
-withNP f g =
-  do
-    nf <- npfile
-    b <- testfile nf
-    if b
-      then input nf >>= f
-      else g
-
-parseStations :: Brainzo -> Stations
-parseStations (Brainzo env _) =
-  Map.fromList $ foldr tupleOrDrop [] (T.words <$> T.lines config)
-  where tupleOrDrop [a, b] agg = (line a, line b):agg
-        tupleOrDrop _      agg = agg
-        line = unsafeTextToLine
-        config = fromJust . Map.lookup "radio.stations" $ env
 
 icon :: Line
 icon =  unsafeTextToLine "media-playback-start"
