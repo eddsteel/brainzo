@@ -32,8 +32,7 @@ parseKVAndSetNP ks = decodeKV (unsafeTextToLine ks) >>= storeNP
 
 storeNP  :: NowPlaying -> Shell Line
 storeNP np = do
-  json <- epoched np >>= encodeJSON
-  _ <- echo json
+  json <- epoched np >>= encodeJSON  
   consulSet "now-playing" . lineToText $ json
 
 displayNP :: Shell Line

@@ -11,6 +11,7 @@ module Brainzo.Data.NowPlaying( NowPlaying
                               , stamped
                               , toLine
                               , nowTrack
+                              , nowFilm
                               , nowPlayingRadio) where
 
 import Data.Aeson
@@ -47,7 +48,9 @@ fromStationTrack  = nowPlayingRadio Nothing Nothing
 
 nowTrack :: Text -> Text -> IO NowPlaying
 nowTrack artist title = NowPlayingTrack artist title Nothing `fmap` (fmap utcTimeToPOSIXSeconds getCurrentTime)
-   
+
+nowFilm :: Text -> IO NowPlaying
+nowFilm title = NowPlayingFilm title `fmap` (fmap utcTimeToPOSIXSeconds getCurrentTime)
 
 toLine :: NowPlaying -> Line
 toLine = unsafeTextToLine . text

@@ -29,6 +29,7 @@ library
       Brainzo.Commands.GoogleMaps
       Brainzo.Commands.Keys
       Brainzo.Commands.Mouse
+      Brainzo.Commands.MPRIS
       Brainzo.Commands.NowPlaying
       Brainzo.Commands.Radio
       Brainzo.Commands.Version
@@ -51,6 +52,7 @@ library
     , aeson
     , base
     , bytestring
+    , cgi
     , containers
     , dbus
     , directory
@@ -84,6 +86,7 @@ executable b
     , base
     , brainzo
     , bytestring
+    , cgi
     , containers
     , dbus
     , directory
@@ -118,6 +121,7 @@ executable brainzo-api
     , blaze-html
     , brainzo
     , bytestring
+    , cgi
     , containers
     , dbus
     , directory
@@ -156,6 +160,7 @@ test-suite main
     , base
     , brainzo
     , bytestring
+    , cgi
     , containers
     , dbus
     , directory

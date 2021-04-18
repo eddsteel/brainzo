@@ -7,12 +7,10 @@ import DBus.Client(ClientError, clientError)
 import DBus.Notify
 import DBus.Notify(Icon(..))
 import Data.Aeson
-import Data.Maybe(fromMaybe)
 import Data.Text(Text)
 import Data.Text.Lazy(toStrict, fromStrict)
 import Data.Text.Lazy.Encoding
-import qualified Data.ByteString.Lazy as LBS
-import Text.Regex.Applicative.Text(some, psym, match, (<|>), sym, optional)
+import Text.Regex.Applicative.Text(some, psym, match, sym, optional)
 import Turtle hiding (match)
 import qualified Data.List.NonEmpty as NEL
 import qualified Data.Text as T

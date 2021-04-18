@@ -16,3 +16,6 @@ data Command = Cmd { commandName :: Text
                    , entryPoint :: WorkStep
                    , reqs :: [Text] -- files to load
                    }
+cmdPair :: Command -> (Text, Command)
+cmdPair c = (commandName c, c)
+          

@@ -28,6 +28,7 @@ install: mobile/brainzo.apk
 install-service:
 	sudo install $(shell stack exec -- which brainzo-api) /usr/bin
 	sudo install brainzo.service /usr/lib/systemd/user/brainzo.service
+	systemctl --user daemon-reload
 
 log:
 	adb logcat *:S ReactNative:V ReactNativeJS:V

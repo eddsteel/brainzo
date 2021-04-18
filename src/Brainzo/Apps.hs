@@ -1,16 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Brainzo.Apps(browser,mplayer,mouseMove,mouseClick,keyPress,killall,pactl,pamixer,consulValue,consulSet) where
+module Brainzo.Apps(browser,mplayer,mouseMove,mouseClick,keyPress,killall,pactl,pamixer,consulValue,consulSet,playerctl) where
 
 -- | Apps called via shell that should be replaced with libraries
 -- (and then they should move to (processes))
-import Data.ByteString(ByteString)
 import Data.Maybe(fromMaybe, isNothing)
 import qualified Data.Text as T
 import Turtle
-import qualified Turtle.Bytes as BS
-import Data.Text.Lazy(toStrict)
-import Data.Text.Encoding
-import qualified Data.ByteString.Lazy as LBS
 import Brainzo.Data.Mouse(MouseDirection, deltaT)
 import System.IO.Unsafe(unsafePerformIO)
 
@@ -18,7 +13,7 @@ browser    :: Text -> Shell Line
 browser url = inproc "xdg-open" [url] empty
 
 dotool :: Text
-dotool = "ydotool"
+dotool = "xdotool"
 
 -- run mplayer
 mplayerOptions :: [Text]
@@ -32,6 +27,11 @@ pactl args = inproc "pactl" args empty
 
 pamixer :: Shell Line
 pamixer = inproc "pavucontrol" empty empty
+
+playerctl :: [Text] -> Shell (Maybe Text)
+playerctl args = wrap <$> procStrict "playerctl" args empty
+  where wrap (ExitSuccess, t) = Just t
+        wrap _                = Nothing
 
 keyPress :: Text -> Shell Line
 keyPress k = do
@@ -52,7 +52,7 @@ mouseMove dir n = let
     let dsp = fromMaybe ":0" disp
     _ <- when (isNothing disp) (export "DISPLAY" dsp)
     let _ = unsafePerformIO $ putStrLn (concat (fmap T.unpack xy))
-    inproc dotool ("mousemove" : "--" : xy) empty
+    inproc dotool ("mousemove_relative" : "--" : xy) empty
 
 consulValue :: Text -> Shell Line
 consulValue k = inproc "consul" ["kv", "get", k] empty

@@ -12,6 +12,7 @@ dependencies:
 - ConfigFile
 - MissingH
 - containers
+- cgi
 - dbus
 - directory
 - fdo-notify

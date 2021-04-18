@@ -18,8 +18,8 @@ icon = unsafeTextToLine "preferences-desktop-keyboard"
 aliases :: Map Text KeySym
 aliases = fromList [ ("louder", "XF86AudioRaiseVolume")
                    , ("quieter", "XF86AudioLowerVolume")
-                   , ("pause", " ")   -- because for active players this is
-                   , ("play", " ")    -- more reliable than XF86*
+                   , ("pause", "space")   -- because for active players this is
+                   , ("play", "space")    -- more reliable than XF86*
                    , ("rwd", "ctrl+Left") -- and here, too
                    , ("fwd", "ctrl+Right")--
                    , ("close", "super+w")
