@@ -9,10 +9,16 @@ run:
 
 release: mobile/brainzo.apk
 
-mobile/brainzo.apk:
-	cd mobile/android && \
-	./gradlew assembleRelease && \
-	cd app/build/outputs/apk/release && \
+mobile/brainzo.apk: build sign
+
+build:
+	cd mobile &&\
+	react-native bundle --platform=android --dev=false --entry-file=index.js --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res/  &&\
+	cd android &&\
+	./gradlew clean bundleRelease assembleRelease
+
+sign:
+	cd mobile/android/app/build/outputs/apk/release && \
 	jarsigner -keystore ~/.secrets/android.keystore app-release-unsigned.apk edd && \
 	mv app-release-unsigned.apk ../../../../../../brainzo.apk
 

@@ -10,8 +10,7 @@ export default class Key extends React.Component {
     constructor(props) {
         super(props);
 
-        this.sendKey = (chan, sym) => {
-            console.debug("sending ", sym);
+        this.sendKey = (chan, sym) => {            
             putAsync(chan, sym);
         }
     }

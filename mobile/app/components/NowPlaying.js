@@ -1,9 +1,9 @@
 import React, { PureComponent } from 'react';
 import {
     StyleSheet,
+    Text,
     View
 } from 'react-native';
-import TextTicker from 'react-native-text-ticker'
 import Brainzo from '../util/Brainzo'
 
 export default class NowPlaying extends PureComponent {
@@ -20,19 +20,16 @@ export default class NowPlaying extends PureComponent {
         var np = this.state.nowPlaying;
         console.log("now playing " + np)
         return (
-              <TextTicker
+            <Text
                 style={{
                     fontSize: 20,
                     textAlign: 'center',
                     margin: 5,
                     color: '#ff00dd',
 
-                }}
-                duration={15000}
-                loop
-                bounce>
+                }}>
                 {np}
-                </TextTicker>
+            </Text>
         );
     }
 

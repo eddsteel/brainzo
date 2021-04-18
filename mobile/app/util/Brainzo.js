@@ -15,6 +15,13 @@ export default class Brainzo {
             });
     }
 
+    mpris(sym) {
+        fetch(Brainzo.home + "/mpris/" + sym)
+            .catch((error) => {
+                console.error(error);
+            });
+    }
+
     nowPlaying() {
         console.debug("get now playing")
         return fetch(Brainzo.home + "/np/get")

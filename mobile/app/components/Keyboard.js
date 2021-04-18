@@ -9,7 +9,6 @@ import {
 } from 'react-native';
 
 import Key from './Key';
-import Mouse from './Mouse';
 
 const styles = {
     keyblock: {
@@ -45,7 +44,8 @@ export default class Keyboard extends Component {
 
     render() {
         var ch = this.props.chan;
-        var mc = this.props.mchan;
+        var mc = this.props.mouseChan;
+        var mp = this.props.mprisChan;
         return (
             <View style={{alignItems: 'center'}}>
               <View style={{flexDirection: 'row'}}>
@@ -76,25 +76,32 @@ export default class Keyboard extends Component {
                 </View>
                 <View style={styles.keyblock}>
                   <View style={styles.keyblockrow}>
-                    <Mouse chan={mc} sym="NW" icon="arrow-up-left"/>
-                    <Mouse chan={mc} sym="N" icon="arrow-up"/>
-                    <Mouse chan={mc} sym="NE" icon="arrow-up-right"/>
+                    <Key chan={mc} sym="NW" icon="arrow-up-left"/>
+                    <Key chan={mc} sym="N" icon="arrow-up"/>
+                    <Key chan={mc} sym="NE" icon="arrow-up-right"/>
                   </View>
                   <View style={styles.keyblockrow}>
-                    <Mouse chan={mc} sym="W" icon="arrow-left"/>
-                    <Mouse chan={mc} sym="click" icon="circle"/>
-                    <Mouse chan={mc} sym="E" icon="arrow-right"/>
+                    <Key chan={mc} sym="W" icon="arrow-left"/>
+                    <Key chan={mc} sym="click" icon="circle"/>
+                    <Key chan={mc} sym="E" icon="arrow-right"/>
                   </View>
                   <View style={styles.keyblockrow}>
-                    <Mouse chan={mc} sym="SW" icon="arrow-down-left"/>
-                    <Mouse chan={mc} sym="S" icon="arrow-down"/>
-                    <Mouse chan={mc} sym="SE" icon="arrow-down-right"/>
+                    <Key chan={mc} sym="SW" icon="arrow-down-left"/>
+                    <Key chan={mc} sym="S" icon="arrow-down"/>
+                    <Key chan={mc} sym="SE" icon="arrow-down-right"/>
                   </View>
                 </View>
               </View>
               <View style={styles.keyblockrow}>
-                <Key chan={ch} sym="super+shift+e" icon="file-text"/>
-                <Key chan={ch} sym="super+shift+w" icon="film"/>
+                <Key chan={mp} sym="previous" icon="chevron-left"/>
+                <Key chan={mp} sym="back" icon="rewind"/>
+                <Key chan={mp} sym="play-pause" icon="play"/>
+                <Key chan={mp} sym="forward" icon="fast-forward"/>
+                <Key chan={mp} sym="next" icon="chevron-right"/>
+              </View>
+              <View style={styles.keyblockrow}>
+                <Key chan={ch} sym="super+alt+control+shift+e" icon="file-text"/>
+                <Key chan={ch} sym="super+alt+control+shift+f" icon="film"/>
                 <Key chan={ch} sym="super+Tab" icon="external-link"/>
                 <Key chan={ch} sym="sleep" icon="power"/>
               </View>
