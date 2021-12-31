@@ -7,7 +7,6 @@ import Brainzo.Commands.GoogleMaps(searchURL)
 main :: IO ()
 main = hspec spec
 
-
 spec :: Spec
 spec = do
   describe "searchURL" $ do

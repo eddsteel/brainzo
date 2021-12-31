@@ -17,7 +17,6 @@ dependencies:
 - directory
 - fdo-notify
 - foldl
-- fraction
 - mtl
 - process
 - regex-applicative-text

@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Brainzo.Commands.GoogleMaps(command) where
+module Brainzo.Commands.GoogleMaps(command, searchURL) where
 
 import Brainzo.Apps(browser)
 import Brainzo.Data
@@ -16,8 +16,8 @@ googleMap args = openMap args
 
 openMap :: NonEmpty Text -> Shell Line
 openMap = browser . searchURL . T.unwords . NEL.toList
-  where
-    searchURL = T.append "https://www.google.com/maps/search/" . T.replace " " "+"
+
+searchURL = T.append "https://www.google.com/maps/search/" . T.replace " " "+"
 
 command :: Command
 command = Cmd "map" [] googleMap []

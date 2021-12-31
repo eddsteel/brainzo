@@ -2,7 +2,4 @@ flags: {}
 packages:
 - '.'
 extra-deps:
-  - fraction-0.1.0.6
-  - happstack-lite-7.3.6
-  - happstack-server-7.4.6.4
 resolver: lts-9.0
