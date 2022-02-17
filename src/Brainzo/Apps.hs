@@ -1,35 +1,44 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Brainzo.Apps(browser,mplayer,mouseMove,mouseClick,keyPress,killall,pactl,pamixer,consulValue,consulSet,playerctl) where
+module Brainzo.Apps( browser
+                   , mplayer
+                   , mouseMove
+                   , mouseClick
+                   , keyPress
+                   , killall
+                   , pactl
+                   , pamixer
+                   , consulValue
+                   , consulSet
+                   , playerctl) where
 
--- | Apps called via shell that should be replaced with libraries
--- (and then they should move to (processes))
 import Data.Maybe(fromMaybe, isNothing)
 import qualified Data.Text as T
 import Turtle
 import Brainzo.Data.Mouse(MouseDirection, deltaT)
+import Brainzo.Paths
 import System.IO.Unsafe(unsafePerformIO)
 
 browser    :: Text -> Shell Line
-browser url = inproc "xdg-open" [url] empty
+browser url = inproc xdgopenp [url] empty
 
 dotool :: Text
-dotool = "xdotool"
+dotool = xdotoolp
 
 -- run mplayer
 mplayerOptions :: [Text]
 mplayerOptions = ["-prefer-ipv4", "-ao", "alsa"]
 
 mplayer :: Line -> Shell Line
-mplayer url = inproc "mplayer" (lineToText url:mplayerOptions) empty
+mplayer url = inproc mplayerp (lineToText url:mplayerOptions) empty
 
 pactl :: [Text] -> Shell Line
-pactl args = inproc "pactl" args empty
+pactl args = inproc pactlp args empty
 
 pamixer :: Shell Line
-pamixer = inproc "pavucontrol" empty empty
+pamixer = inproc pavucontrolp empty empty
 
 playerctl :: [Text] -> Shell (Maybe Text)
-playerctl args = wrap <$> procStrict "playerctl" args empty
+playerctl args = wrap <$> procStrict playerctlp args empty
   where wrap (ExitSuccess, t) = Just t
         wrap _                = Nothing
 
@@ -55,10 +64,10 @@ mouseMove dir n = let
     inproc dotool ("mousemove_relative" : "--" : xy) empty
 
 consulValue :: Text -> Shell Line
-consulValue k = inproc "consul" ["kv", "get", k] empty
+consulValue k = inproc consulp ["kv", "get", k] empty
 
 consulSet :: Text -> Text -> Shell Line
-consulSet k v = inproc "consul" ["kv", "put", k, v] empty
+consulSet k v = inproc consulp ["kv", "put", k, v] empty
 
 killall :: Text -> Shell Line
-killall name = inproc "killall" ["-q", name] empty
+killall name = inproc killallp ["-q", name] empty
