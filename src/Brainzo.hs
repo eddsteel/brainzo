@@ -35,10 +35,3 @@ brainzoUsage = texts >>= textToLines
       , fmap ((T.append "  - ") . commandName) . M.elems $ commands
       , [ ""
         , "Share and Enjoy."]]
-
-loadRequirement :: Text -> Shell Requirement
-loadRequirement name = do
-  h <- format fp <$> home
-  let reqFile = T.concat [h, "/.brainzo/", name]
-  contents <- (liftIO . readTextFile . fromText) reqFile
-  return (name, contents)

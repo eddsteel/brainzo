@@ -23,10 +23,10 @@ expandHomeIO f = do
   return (format fp (head fs))
 
 brainzoFile :: Text -> Shell FilePath
-brainzoFile t = expandHome . fromText . T.concat $ [".brainzo/", t]
+brainzoFile t = expandHome . fromText . T.concat $ [".config/brainzo/", t]
 
 configMap :: FilePath -> Shell (Map Text Text)
 configMap fp = do
   lines <- T.lines . lineToText <$> input fp
-  let list = T.breakOn " " <$> lines  
+  let list = T.breakOn " " <$> lines
   return . Map.map T.strip . Map.fromList $ list

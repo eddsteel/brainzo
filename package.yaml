@@ -6,13 +6,14 @@ author: Edd Steel <edd@eddsteel.com>
 extra-source-files:
   - README.md
 dependencies:
+- config-ini
+- MissingH
 - aeson
 - base
 - bytestring
-- ConfigFile
-- MissingH
-- containers
 - cgi
+- containers
+- curl
 - dbus
 - directory
 - fdo-notify

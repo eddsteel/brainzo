@@ -21,7 +21,6 @@ mpris args = case args of
   ("back":|_) -> back
   ("forward":|_) -> forward
   ("next":|_) -> next
-             
   _ -> bail "mpris" args
 
 setNP :: Shell Line

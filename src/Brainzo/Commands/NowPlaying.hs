@@ -6,7 +6,7 @@ import Brainzo.Data
 import Brainzo.Data.NowPlaying
 import Brainzo.Util(bail)
 import Brainzo.Processes(notifyPipe, encodeJSON, decodeJSON, decodeKV)
-import Data.List.NonEmpty(NonEmpty((:|))) 
+import Data.List.NonEmpty(NonEmpty((:|)))
 import Data.Time.Clock.POSIX(getPOSIXTime,POSIXTime)
 import Turtle(Shell, Line, Text, liftIO, unsafeTextToLine, lineToText,echo)
 
@@ -30,9 +30,9 @@ parseJSAndSetNP json = decodeJSON (unsafeTextToLine json) >>= storeNP
 parseKVAndSetNP :: Text -> Shell Line
 parseKVAndSetNP ks = decodeKV (unsafeTextToLine ks) >>= storeNP
 
-storeNP  :: NowPlaying -> Shell Line
+storeNP :: NowPlaying -> Shell Line
 storeNP np = do
-  json <- epoched np >>= encodeJSON  
+  json <- epoched np >>= encodeJSON
   consulSet "now-playing" . lineToText $ json
 
 displayNP :: Shell Line

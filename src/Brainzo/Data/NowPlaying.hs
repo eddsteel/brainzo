@@ -15,7 +15,8 @@ module Brainzo.Data.NowPlaying( NowPlaying
                               , nowPlayingRadio) where
 
 import Data.Aeson
-import qualified Data.HashMap.Lazy as HML(keys)
+import qualified Data.Aeson.Key as Key
+import qualified Data.Aeson.KeyMap as KeyMap
 import Data.Text(Text)
 import qualified Data.Text as T
 import Data.Maybe(maybe)
@@ -55,23 +56,24 @@ nowFilm title = NowPlayingFilm title `fmap` (fmap utcTimeToPOSIXSeconds getCurre
 toLine :: NowPlaying -> Line
 toLine = unsafeTextToLine . text
   where
-    text (NowPlayingRadio {..}) = if track == "" then station else station `dash` track
-    text (NowPlayingTrack {..}) = artist `dash` title `brackets` album
+    text (NowPlayingRadio {..})      = if track == "" then station else station `dash` track
+    text (NowPlayingTrack {..})      = artist `dash` title `brackets` album
     text (NowPlayingTelevision {..}) = series `dash` title
-    text (NowPlayingFilm {..}) = title
-    text Off = "off"
-    dash a b = T.concat [a, " — ", b]
-    brackets a (Just b) = T.concat [a, " (", b, ")"]
-    brackets a Nothing  = a
+    text (NowPlayingFilm {..})       = title
+    text Off                         = "off"
+    dash a b                         = T.concat [a, " — ", b]
+    brackets a (Just b)              = T.concat [a, " (", b, ")"]
+    brackets a Nothing               = a
 
 instance FromJSON NowPlaying where
   parseJSON (Object o)
-    | "station" `elem` HML.keys o = radio
-    | "album"   `elem` HML.keys o = albumTrack
-    | "artist"  `elem` HML.keys o = track
-    | "series"  `elem` HML.keys o = episode
-    | otherwise                   = film
+    | elem "station" o = radio
+    | elem "album" o   = albumTrack
+    | elem "artist" o  = track
+    | elem "series" o  =  episode
+    | otherwise        = film
     where
+      elem t m   = Key.fromText t `KeyMap.member` m
       radio      = fromStationTrack     <$> o .: "station" <*> o .: "track"
       albumTrack = NowPlayingTrack      <$> o .: "artist"  <*> o .: "title" <*> o .: "album" <*> o .: "time"
       track      = NowPlayingTrack      <$> o .: "artist"  <*> o .: "title" <*> pure Nothing <*> o .: "time"
@@ -87,7 +89,7 @@ instance ToJSON NowPlaying where
   toJSON (Off)                       = object []
 
 isfresh                            :: Integer -> NowPlaying -> Bool
-isfresh i NowPlayingRadio {..}      = (maybe 0 (floor . utcTimeToPOSIXSeconds) playedOn) - i > 300  
+isfresh i NowPlayingRadio {..}      = (maybe 0 (floor . utcTimeToPOSIXSeconds) playedOn) - i > 300
 isfresh i NowPlayingTrack {..}      = (floor time) - i > 300
 isfresh i NowPlayingTelevision {..} = (floor time) - i > 300
 isfresh i NowPlayingFilm {..}       = (floor time) - i > 300

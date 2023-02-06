@@ -12,12 +12,12 @@ import Data.Text.Lazy(toStrict, fromStrict)
 import Data.Text.Lazy.Encoding
 import Text.Regex.Applicative.Text(some, psym, match, sym, optional)
 import Turtle hiding (match)
+import qualified Data.Aeson.Key as Key
 import qualified Data.List.NonEmpty as NEL
 import qualified Data.Text as T
 import qualified Text.Regex.Applicative.Text as RE
 
 -- | Functions lifted into Shell to better interact with turtle and Apps
-
 
 -- Pass through text, sending over DBUS to notify, ignoring errors
 --
@@ -53,12 +53,9 @@ decodeKV line = fromResultM empty $ toResult (parseKV (lineToText line)) >>= fro
 parseKV :: Text -> Maybe Value
 parseKV t = object <$> kvs
   where
-    kvs = match re t
-    re = some kv
+    kvs = match (some kv) t
     kv = ((.=)) <$> key <* sym '=' <*> value <* (optional $ sym ',')
-    key :: RE.RE Char Text
-    key = T.pack <$> (some $ psym (/= '='))
-    value :: RE.RE Char Text
+    key = Key.fromText . T.pack <$> (some $ psym (/= '='))
     value = T.pack <$> (some $ psym (/= ','))
 
 toResult :: Maybe a -> Result a

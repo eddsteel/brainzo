@@ -8,8 +8,7 @@ import Data.Map.Strict(Map)
 import Turtle
 
 data Brainzo = Brainzo { environment :: Env, database :: DB }
-type Env = Map Text Text
-type Requirement = (Text, Text) -- Requirement for a module: (<file name>, <file contents>)
+type Env = Map Text Text  
 type WorkStep = NonEmpty Text -> Shell Line
 data Command = Cmd { commandName :: Text
                    , subCommands :: [Text]
@@ -18,4 +17,4 @@ data Command = Cmd { commandName :: Text
                    }
 cmdPair :: Command -> (Text, Command)
 cmdPair c = (commandName c, c)
-          
+       
