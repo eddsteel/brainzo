@@ -1,16 +1,18 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Brainzo.Commands.Radio(command,icyFormat,list,seek,kees,play,on,off,toggle) where
+module Brainzo.Commands.Radio(command,icyFormat) where
 
 import Brainzo.Apps(mplayer, killall, consulSet)
 import Brainzo.DB.BrainzoDB(radioDB)
 import Brainzo.DB.RadioDB
 import Brainzo.Data
 import Brainzo.Data.NowPlaying(NowPlaying, fromStationTrack, toLine, station)
-import Brainzo.File(brainzoFile, configMap)
+import Brainzo.File(brainzoFile, brainzoINI)
 import Brainzo.Processes(notifyPipe, notifyAllPipe, encodeJSON)
-import Brainzo.Util(bail)
+import Brainzo.Util(bail, ssvMap)
 import Control.Applicative((<|>))
 import Data.Bool(bool)
+import Data.Either.Utils
+import Data.Ini.Config
 import Data.List.NonEmpty(NonEmpty((:|)))
 import Data.Map.Strict(Map)
 import Data.Maybe(fromMaybe, isJust, fromJust)
@@ -32,54 +34,31 @@ npfile = brainzoFile "radio-np"
 pidfile :: Shell FilePath
 pidfile = brainzoFile "radio.pid"
 
-stationfile :: Shell FilePath
-stationfile = brainzoFile "radio.stations"
-
 radio :: WorkStep
-radio args = configured <|> case args of
-  ("list"  :|_  ) -> list
-  ("play"  :|k:_) -> play (unsafeTextToLine k)
-  ("seek"  :|_  ) -> seek
-  ("kees"  :|_  ) -> kees
-  ("on"    :|_  ) -> on
-  ("off"   :|_  ) -> off
-  ("toggle":|_  ) -> toggle
-  _               -> bail "radio" args
-  
-configured :: Shell Line
-configured = do
-  np <- npfile
-  valid <- testfile np
-  if valid then empty else (err "radio needs some stations." >> empty)
-
-list :: Shell Line
-list = unsafeTextToLine <$> (stations >>= select . Map.keys)
-
-seek :: Shell Line
-seek = nextStation Fwd >>= playStation
-
-kees :: Shell Line
-kees = nextStation Bwd >>= playStation
-
-play :: Line -> Shell Line
-play = playStation
+radio ("list":|_)   = unsafeTextToLine <$> (stations >>= select . Map.keys)
+radio ("play":|k:_) = playStation (unsafeTextToLine k)
+radio ("seek":|_)   = nextStation Fwd >>= playStation
+radio ("kees":|_)   = nextStation Bwd >>= playStation
+radio ("on":|_)     = on
+radio ("off":|_)    = off
+radio ("toggle":|_) = isPlaying >>= bool on off
+radio args          = bail "radio" args
 
 on :: Shell Line
 on = currentStation >>= playStation
 
 off :: Shell Line
-off = stopRadio
+off = killall "mplayer" *> (npfile >>= rm) *> empty
 
-toggle :: Shell Line
-toggle = isPlaying >>= bool on off
-
--- helpers
-
-stopRadio :: Shell Line
-stopRadio = killall "mplayer" *> (npfile >>= rm) *> empty
+stationsParser :: IniParser Stations
+stationsParser = section "RADIO" $ do
+  stns <- fieldOf "stations" string
+  return $ ssvMap stns
 
 stations :: Shell Stations
-stations = stationfile >>= configMap
+stations = do
+  ini <- brainzoINI
+  return . forceEither .  parseIniFile ini $ stationsParser
 
 playStation :: Line -> Shell Line
 playStation key = stationURL key >>= player >>= storeCurrent key
@@ -87,7 +66,7 @@ playStation key = stationURL key >>= player >>= storeCurrent key
 storeCurrent :: Line -> Line -> Shell Line
 storeCurrent k o =
   let
-    np = fromStationTrack (lineToText k) (lineToText o)    
+    np = fromStationTrack (lineToText k) (lineToText o)
   in
     off
    <* (encodeJSON np >>= consulSet "now-playing" . lineToText)

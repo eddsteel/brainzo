@@ -26,10 +26,10 @@ dotool = xdotoolp
 
 -- run mplayer
 mplayerOptions :: [Text]
-mplayerOptions = ["-prefer-ipv4", "-ao", "alsa"]
+mplayerOptions = ["-prefer-ipv4", "-ao", "alsa", "-nocache"]
 
 mplayer :: Line -> Shell Line
-mplayer url = inproc mplayerp (lineToText url:mplayerOptions) empty
+mplayer url = inproc "mplayer" (lineToText url:mplayerOptions) empty
 
 pactl :: [Text] -> Shell Line
 pactl args = inproc pactlp args empty
@@ -64,10 +64,14 @@ mouseMove dir n = let
     inproc dotool ("mousemove_relative" : "--" : xy) empty
 
 consulValue :: Text -> Shell Line
-consulValue k = inproc consulp ["kv", "get", k] empty
+consulValue k = do
+  inproc consulp ["kv", "get", k] empty
 
 consulSet :: Text -> Text -> Shell Line
-consulSet k v = inproc consulp ["kv", "put", k, v] empty
+consulSet k v =  do
+  echo . unsafeTextToLine $ consulp
+  echo . unsafeTextToLine $ v
+  inproc consulp ["kv", "put", k, v] empty
 
 killall :: Text -> Shell Line
 killall name = inproc killallp ["-q", name] empty

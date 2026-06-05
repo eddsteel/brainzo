@@ -19,8 +19,8 @@ dependencies:
 - fdo-notify
 - foldl
 - mtl
+- parsec
 - process
-- regex-applicative-text
 - safe
 - sqlite-simple
 - strict

@@ -12,20 +12,25 @@ import Turtle
 toList :: Shell a -> IO [a]
 toList s = fold s Fold.list
 
-expandHome    :: FilePath -> Shell FilePath
+expandHome    :: Turtle.FilePath -> Shell Turtle.FilePath
 expandHome fpa = do
   h <- format fp <$> home
-  return $ (fromText . T.concat) [h, "/", format fp fpa]
+  return $ (T.unpack . T.concat) [h, "/", format fp fpa]
 
-expandHomeIO  :: FilePath -> IO Text
+expandHomeIO  :: Turtle.FilePath -> IO Text
 expandHomeIO f = do
   fs <- (toList . expandHome) f
   return (format fp (head fs))
 
-brainzoFile :: Text -> Shell FilePath
-brainzoFile t = expandHome . fromText . T.concat $ [".config/brainzo/", t]
+brainzoFile :: Text -> Shell Turtle.FilePath
+brainzoFile t = expandHome . T.unpack . T.concat $ [".config/brainzo/", t]
 
-configMap :: FilePath -> Shell (Map Text Text)
+brainzoINI :: Shell Text
+brainzoINI = do
+  fp <- brainzoFile "brainzo.conf"
+  liftIO . strict . input $ fp
+
+configMap :: Turtle.FilePath -> Shell (Map Text Text)
 configMap fp = do
   lines <- T.lines . lineToText <$> input fp
   let list = T.breakOn " " <$> lines

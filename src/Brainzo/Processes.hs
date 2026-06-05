@@ -10,12 +10,11 @@ import Data.Aeson
 import Data.Text(Text)
 import Data.Text.Lazy(toStrict, fromStrict)
 import Data.Text.Lazy.Encoding
-import Text.Regex.Applicative.Text(some, psym, match, sym, optional)
-import Turtle hiding (match)
+import Text.Parsec(parse, sepBy1, char, noneOf)
+import Turtle hiding (sepBy1, char, noneOf)
 import qualified Data.Aeson.Key as Key
 import qualified Data.List.NonEmpty as NEL
 import qualified Data.Text as T
-import qualified Text.Regex.Applicative.Text as RE
 
 -- | Functions lifted into Shell to better interact with turtle and Apps
 
@@ -51,12 +50,13 @@ decodeKV :: FromJSON a => Line -> Shell a
 decodeKV line = fromResultM empty $ toResult (parseKV (lineToText line)) >>= fromJSON
 
 parseKV :: Text -> Maybe Value
-parseKV t = object <$> kvs
+parseKV t = object <$> (mb $ kvs t)
   where
-    kvs = match (some kv) t
-    kv = ((.=)) <$> key <* sym '=' <*> value <* (optional $ sym ',')
-    key = Key.fromText . T.pack <$> (some $ psym (/= '='))
-    value = T.pack <$> (some $ psym (/= ','))
+    kvs = parse (sepBy1 kv (char ',')) ""
+    kv = mkKV <$> sepBy1 (many (noneOf "=,")) (char '=')
+    mkKV [a, b] = (Key.fromText . T.pack $ a) .= T.pack b
+    mb (Left _) = Nothing
+    mb (Right a) = Just a
 
 toResult :: Maybe a -> Result a
 toResult (Just a) = Success a

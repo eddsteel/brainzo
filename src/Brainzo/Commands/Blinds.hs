@@ -1,8 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Brainzo.Commands.Blinds where
+module Brainzo.Commands.Blinds(command) where
 
 import Brainzo.Data
-import Brainzo.File(brainzoFile)
+import Brainzo.File(brainzoINI)
 import Brainzo.Util(bail)
 import Control.Monad(forM_)
 import Data.Either.Utils
@@ -49,8 +49,7 @@ configParser = section "BLINDS" $ do
 
 cmd :: BlindCmd -> BlindSpec -> Shell Line
 cmd cmd spec = do
-  fp <- brainzoFile "brainzo.conf"
-  ini <- liftIO . strict . input $ fp
+  ini <- brainzoINI
   let config = forceEither $ parseIniFile ini configParser
   let ids = apply spec $ T.words (blindIDs config)
   -- Haven't figured out how to do multiple commands in one curl

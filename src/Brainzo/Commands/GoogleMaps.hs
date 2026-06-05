@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Brainzo.Commands.GoogleMaps(command, searchURL) where
+module Brainzo.Commands.GoogleMaps(command,searchURL) where
 
 import Brainzo.Apps(browser)
 import Brainzo.Data
@@ -10,7 +10,6 @@ import Turtle
 import qualified Data.Text as T
 import qualified Data.List.NonEmpty as NEL
 
--- greedy unless first char is "
 googleMap :: WorkStep
 googleMap args = openMap args
 

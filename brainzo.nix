@@ -1,7 +1,7 @@
 { mkDerivation, aeson, base, blaze-html, bytestring, cgi
 , config-ini, containers, curl, dbus, directory, fdo-notify, foldl
 , happstack-lite, happstack-server, hpack, hspec, lib, MissingH
-, mtl, process, regex-applicative-text, safe, sqlite-simple, strict
+, mtl, parsec, process, safe, strict, sqlite-simple
 , system-filepath, text, time, turtle, unordered-containers
 }:
 mkDerivation {
@@ -12,7 +12,7 @@ mkDerivation {
   isExecutable = true;
   libraryHaskellDepends = [
     aeson base bytestring cgi config-ini containers curl dbus directory
-    fdo-notify foldl MissingH mtl process regex-applicative-text safe
+    fdo-notify foldl MissingH mtl parsec process safe
     sqlite-simple strict system-filepath text time turtle
     unordered-containers
   ];
@@ -20,12 +20,12 @@ mkDerivation {
   executableHaskellDepends = [
     aeson base blaze-html bytestring cgi config-ini containers curl dbus
     directory fdo-notify foldl happstack-lite happstack-server MissingH
-    mtl process regex-applicative-text safe sqlite-simple strict
+    mtl parsec process safe sqlite-simple strict
     system-filepath text time turtle unordered-containers
   ];
   testHaskellDepends = [
     aeson base bytestring cgi config-ini containers curl dbus directory
-    fdo-notify foldl hspec MissingH mtl process regex-applicative-text
+    fdo-notify foldl hspec MissingH mtl parsec process
     safe sqlite-simple strict system-filepath text time turtle
     unordered-containers
   ];

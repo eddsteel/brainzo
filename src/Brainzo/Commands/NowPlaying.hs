@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Brainzo.Commands.NowPlaying(command, retrieveNP, storeNP) where
+module Brainzo.Commands.NowPlaying(command,storeNP) where
 
 import Brainzo.Apps(consulSet, consulValue)
 import Brainzo.Data

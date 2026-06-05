@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Brainzo.Commands.Audio(command, louder, quieter, mute, micmute, mixer) where
+module Brainzo.Commands.Audio(command) where
 
 import Brainzo.Apps(pactl)
 import Brainzo.Data
